@@ -160,7 +160,11 @@ export const getProjects = async (): Promise<Project[]> => {
       .eq('is_deleted', false);
       
     if (error) throw error;
-    return (data || []).map(mapProject);
+    if (!data || data.length === 0) {
+      console.warn('Supabase respondió 0 proyectos; usando mockData de respaldo para demo.');
+      return mockProjects;
+    }
+    return data.map(mapProject);
   } catch (err) {
     console.warn('Fallo de lectura en Supabase (projects). Usando mockData de respaldo.', err);
     return mockProjects;
@@ -180,6 +184,10 @@ export const getAdvances = async (projectId?: EntityId): Promise<ProjectAdvance[
     }
     const { data, error } = await query;
     if (error) throw error;
+    if (!projectId && (!data || data.length === 0)) {
+      console.warn('Supabase respondió 0 avances; usando mockData de respaldo para demo.');
+      return mockAdvances;
+    }
     return (data || []).map(mapAdvance);
   } catch (err) {
     console.warn(`Fallo de lectura en Supabase (advances). Usando mockData de respaldo.`, err);
@@ -202,6 +210,10 @@ export const getActivities = async (projectId?: EntityId): Promise<ProjectActivi
     }
     const { data, error } = await query;
     if (error) throw error;
+    if (!projectId && (!data || data.length === 0)) {
+      console.warn('Supabase respondió 0 actividades; usando mockData de respaldo para demo.');
+      return mockActivities;
+    }
     return (data || []).map(mapActivity);
   } catch (err) {
     console.warn(`Fallo de lectura en Supabase (activities). Usando mockData de respaldo.`, err);
@@ -224,6 +236,10 @@ export const getMeetings = async (projectId?: EntityId): Promise<ProjectMeeting[
     }
     const { data, error } = await query;
     if (error) throw error;
+    if (!projectId && (!data || data.length === 0)) {
+      console.warn('Supabase respondió 0 reuniones; usando mockData de respaldo para demo.');
+      return mockMeetings;
+    }
     return (data || []).map(mapMeeting);
   } catch (err) {
     console.warn(`Fallo de lectura en Supabase (meetings). Usando mockData de respaldo.`, err);
@@ -246,6 +262,10 @@ export const getCommitments = async (projectId?: EntityId): Promise<ProjectCommi
     }
     const { data, error } = await query;
     if (error) throw error;
+    if (!projectId && (!data || data.length === 0)) {
+      console.warn('Supabase respondió 0 compromisos; usando mockData de respaldo para demo.');
+      return mockCommitments;
+    }
     return (data || []).map(mapCommitment);
   } catch (err) {
     console.warn(`Fallo de lectura en Supabase (commitments). Usando mockData de respaldo.`, err);
@@ -268,6 +288,10 @@ export const getTimeLogs = async (projectId?: EntityId): Promise<TimeLog[]> => {
     }
     const { data, error } = await query;
     if (error) throw error;
+    if (!projectId && (!data || data.length === 0)) {
+      console.warn('Supabase respondió 0 registros de tiempo; usando mockData de respaldo para demo.');
+      return mockTimeLogs;
+    }
     return (data || []).map(mapTimeLog);
   } catch (err) {
     console.warn(`Fallo de lectura en Supabase (timeLogs). Usando mockData de respaldo.`, err);
@@ -290,6 +314,10 @@ export const getRisks = async (projectId?: EntityId): Promise<ProjectRisk[]> => 
     }
     const { data, error } = await query;
     if (error) throw error;
+    if (!projectId && (!data || data.length === 0)) {
+      console.warn('Supabase respondió 0 riesgos; usando mockData de respaldo para demo.');
+      return mockRisks;
+    }
     return (data || []).map(mapRisk);
   } catch (err) {
     console.warn(`Fallo de lectura en Supabase (risks). Usando mockData de respaldo.`, err);
