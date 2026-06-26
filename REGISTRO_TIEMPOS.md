@@ -11,9 +11,9 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 | **Fase 1** | Maqueta visual, Layout y Datos Mock | Completado | 10.0 | 8.5 | -1.5 | -15.0% |
 | **Fase 2** | Modelo de Datos Físico y SQL | Completado | 5.0 | 4.0 | -1.0 | -20.0% |
 | **Fase 3** | Integración de Supabase y Auth | Completado | 12.0 | 3.5 | -8.5 | -70.8% |
-| **Fase 4A** | Validación Supabase y Vercel | En Progreso | 4.0 | 1.9 | -- | -- |
+| **Fase 4A** | Validación Supabase y Vercel | Completado | 4.0 | 2.7 | -1.3 | -32.5% |
 | **Fase 4B** | Refactor, Pruebas y Despliegue | Pendiente | 8.0 | 0.0 | -- | -- |
-| **Total** | **Gobernanza Completa del Proyecto** | **En Progreso**| **39.0** | **17.9** | -- | -- |
+| **Total** | **Gobernanza Completa del Proyecto** | **En Progreso**| **39.0** | **18.7** | -- | -- |
 
 ---
 
@@ -61,9 +61,9 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 
 ---
 
-### Fase 4A: Validación de Supabase y Despliegue Demo en Vercel (En Progreso)
+### Fase 4A: Validación de Supabase y Despliegue Demo en Vercel (Completado)
 * **Fecha de Inicio**: 2026-06-25
-* **Fecha de Fin**: En progreso
+* **Fecha de Fin**: 2026-06-25
 
 | Actividad / Tarea | Fecha | Responsable | Horas Estimadas | Horas Reales | Estado | Detalle / Entregables |
 | :--- | :--- | :--- | :---: | :---: | :---: | :--- |
@@ -73,8 +73,10 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 | Validación de consultas y corrección de columna progress | 2026-06-25 | A. Delgado / AI | 0.1 | 0.1 | Finalizado | Corrección de consulta SQL y adición de evidencia de conteo relacional en FASE_4A_VALIDACION_SUPABASE.md. |
 | Creación de plantilla .env.local para pruebas locales | 2026-06-25 | A. Delgado / AI | 0.1 | 0.1 | Finalizado | Creación del archivo .env.local en la raíz del proyecto para ingreso de credenciales de desarrollo. |
 | Corrección relacional PostgREST en projectsService.ts | 2026-06-25 | A. Delgado / AI | 0.1 | 0.1 | Finalizado | Aplicación de desambiguación explícita mediante foreign keys en queries de lectura a Supabase para corregir error PGRST201. |
-| Carga de schema.sql y seed.sql en Supabase | 2026-06-25 | A. Delgado / AI | 1.5 | 0.0 | Pendiente | Ejecución en consola web de Supabase. |
-| Ejecución de Consultas SQL de Validación | 2026-06-25 | A. Delgado / AI | 1.5 | 0.0 | Pendiente | Validación de conteos y restricciones. |
+| Carga de schema.sql y seed.sql en Supabase | 2026-06-25 | A. Delgado / AI | 1.5 | 0.0 | Finalizado | Ejecución en consola web de Supabase (realizado por el usuario). |
+| Ejecución de Consultas SQL de Validación | 2026-06-25 | A. Delgado / AI | 1.5 | 0.0 | Finalizado | Validación de conteos y restricciones (realizado por el usuario). |
+| Carga segura de código y documentación a GitHub | 2026-06-25 | A. Delgado / AI | 0.5 | 0.3 | Finalizado | Push exitoso a través de API y limpieza de PATs temporales. |
+| Diagnóstico y fallback defensivo ante BD vacía | 2026-06-26 | A. Delgado / AI | 0.5 | 0.5 | Finalizado | Implementación de fallback local en proyectos, avances, riesgos, etc., si la respuesta de Supabase es vacía. |
 
 ---
 
