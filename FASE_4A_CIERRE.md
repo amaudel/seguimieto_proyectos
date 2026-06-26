@@ -45,7 +45,7 @@ Se generaron y ajustaron los siguientes recursos en la raíz del proyecto:
 > El archivo `.env.local` fue utilizado únicamente de forma local como archivo de pruebas para inyectar temporalmente las credenciales del proyecto de Supabase en caliente. Al estar registrado en el archivo de exclusión `.gitignore`, permanece estrictamente no versionado y fuera del repositorio Git.
 
 ### 2. Archivos Ajustados
-*   **`src/services/projectsService.ts`**: Modificación de las llamadas API de lectura en las 6 entidades críticas para desambiguar las uniones con `profiles` usando los nombres de las restricciones de llave foránea.
+*   **`src/services/projectsService.ts`**: Modificación de las llamadas API de lectura en las 6 entidades críticas para desambiguar las uniones con `profiles` y adición de un mecanismo defensivo de tolerancia a fallos en demo, que activa el fallback de datos mock si Supabase responde con 0 registros en consultas globales (evitando que la pantalla quede vacía).
 *   **`supabase/seed.sql`**: Inserción de un bloque idempotente de limpieza segura al inicio del script (`TRUNCATE ... RESTART IDENTITY CASCADE`) y corrección del error `42601` de longitud de valores en la tabla de asistentes.
 *   **`SUPABASE_INTEGRATION.md`**: Actualización en la sección de mapeo de uniones para documentar la desambiguación relacional.
 *   **`REGISTRO_TIEMPOS.md`**: Registro de un acumulado de 1.9 horas reales dedicadas a la gobernanza y solución de problemas relacionales en la Fase 4A.
@@ -74,8 +74,8 @@ Se generaron y ajustaron los siguientes recursos en la raíz del proyecto:
 
 ## ⏳ Pendientes para Despliegue en Vercel
 
-1.  Subir el repositorio git local a tu proveedor de la nube.
-2.  Importar el proyecto en la consola de **Vercel** e inyectar las variables públicas `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
+1.  ~~Subir el repositorio git local a tu proveedor de la nube~~ **(Completado)**. El código se ha subido de manera segura a GitHub en [amaudel/seguimieto_proyectos](https://github.com/amaudel/seguimieto_proyectos) (Commit SHA: `7f44b29d45710c9b58bbab98cf6850f91095522b`).
+2.  Importar el proyecto en la consola de **Vercel** conectándolo al repositorio de GitHub e inyectar las variables de entorno públicas `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
 3.  Verificar que el dominio público devuelto por Vercel lea la base de datos de Supabase en vivo sin errores de consola.
 
 ---
