@@ -538,11 +538,15 @@ export const NewProject: React.FC<NewProjectProps> = ({ onSave, onCancel, userPr
                   Esfuerzo Estimado (Horas) <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="number"
-                  min="0"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   placeholder="Ej: 360"
                   value={estimatedHours}
-                  onChange={(e) => setEstimatedHours(e.target.value)}
+                  onChange={(e) => {
+                    const cleanVal = e.target.value.replace(/[^0-9]/g, '');
+                    setEstimatedHours(cleanVal);
+                  }}
                   className="w-full bg-slate-50/50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition-all font-semibold"
                 />
               </div>
