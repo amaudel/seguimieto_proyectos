@@ -80,6 +80,28 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
   const hourDeviation = totalActualHours - totalEstimatedHours;
   const deviationPct = totalEstimatedHours > 0 ? Math.round((hourDeviation / totalEstimatedHours) * 100) : 0;
 
+  // Lógica de fases del ciclo de vida (Fase 4C)
+  const getActiveStep = (): number => {
+    const hasAdvances = projectAdvances.length > 0;
+    switch (projectRaw.status) {
+      case 'Borrador':
+        return hasAdvances ? 1 : 0;
+      case 'En curso':
+      case 'Pausado':
+        return 2;
+      case 'En revisión':
+      case 'Con retraso':
+        return 3;
+      case 'Cerrado':
+      case 'Cancelado':
+        return 4;
+      default:
+        return 0;
+    }
+  };
+  const activeStep = getActiveStep();
+  const steps = ['Iniciación', 'Planificación', 'Ejecución', 'Seguimiento', 'Cierre'];
+
   // Overdue counts
   const currentDateStr = '2026-06-25';
   const overdueActivitiesCount = projectActivities.filter(a => 
@@ -191,6 +213,52 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Column: Scope & Objectives */}
             <div className="lg:col-span-2 space-y-6">
+
+              {/* Stepper de Fases del Proyecto (Fase 4C) */}
+              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                <h3 className="font-bold text-slate-800 text-[11px] uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">
+                  Etapa del Ciclo de Vida del Proyecto
+                </h3>
+                <div className="relative flex items-center justify-between w-full mt-2 px-2">
+                  {/* Línea de fondo */}
+                  <div className="absolute left-6 right-6 top-4 h-0.5 bg-slate-200 z-0" />
+                  
+                  {/* Línea activa */}
+                  <div 
+                    className="absolute left-6 top-4 h-0.5 bg-sky-600 transition-all duration-300 z-0" 
+                    style={{ width: `${(activeStep / (steps.length - 1)) * 90}%` }}
+                  />
+
+                  {steps.map((step, idx) => {
+                    const isCompleted = idx < activeStep;
+                    const isActive = idx === activeStep;
+                    
+                    let circleClass = 'bg-slate-100 text-slate-400 border-slate-200';
+                    if (isCompleted) {
+                      circleClass = 'bg-emerald-500 text-white border-emerald-500';
+                    } else if (isActive) {
+                      circleClass = 'bg-sky-600 text-white border-sky-600 ring-4 ring-sky-100';
+                    }
+
+                    return (
+                      <div key={step} className="flex flex-col items-center relative z-10 w-1/5">
+                        <div className={`w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold transition-all ${circleClass}`}>
+                          {isCompleted ? (
+                            <span className="text-white">✓</span>
+                          ) : (
+                            idx + 1
+                          )}
+                        </div>
+                        <span className={`text-[10px] mt-2 font-bold tracking-tight text-center ${
+                          isActive ? 'text-sky-600 font-extrabold' : isCompleted ? 'text-emerald-600' : 'text-slate-400'
+                        }`}>
+                          {step}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
               
               {/* Conclusión Ejecutiva BPMO */}
               <div className="bg-sky-50 p-5 rounded-xl border border-sky-200 shadow-xs space-y-2 relative overflow-hidden">
@@ -292,6 +360,37 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
               <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-2">
                 <h3 className="font-bold text-slate-900 text-sm border-b border-slate-100 pb-2">Resultado Esperado</h3>
                 <p className="text-xs text-slate-700 leading-relaxed">{project.expected_result}</p>
+              </div>
+
+              {/* Caso de Negocio (Fase 4C) */}
+              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                <div className="border-b border-slate-100 pb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                  <h3 className="font-bold text-slate-900 text-sm">Caso de Negocio e Impacto</h3>
+                  <span className="text-[9px] text-amber-600 font-bold uppercase tracking-wider bg-amber-50 border border-amber-200 px-2 py-0.5 rounded w-fit">
+                    ⚠️ Pendiente de Formalización para Fase 5
+                  </span>
+                </div>
+                
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-0.5">Justificación</span>
+                    <p className="text-slate-500 italic">
+                      Información de justificación corporativa pendiente de integración con base de datos.
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-0.5">Alineación con Objetivos de la Cooperativa</span>
+                    <p className="text-slate-500 italic">
+                      Definición de pilares estratégicos institucionales pendiente de mapeo físico.
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-0.5">beneficios institucionales, operativos y para socios</span>
+                    <p className="text-slate-500 italic">
+                      Cuantificación de impactos y retorno cooperativo pendiente de formalización.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
