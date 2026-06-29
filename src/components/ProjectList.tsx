@@ -6,7 +6,8 @@ import {
   Briefcase, 
   User, 
   Calendar, 
-  Clock
+  Clock,
+  Plus
 } from 'lucide-react';
 
 
@@ -14,9 +15,10 @@ interface ProjectListProps {
   projects: Project[];
   onSelectProject: (projectId: EntityId) => void;
   risks?: ProjectRisk[];
+  onCreateProject?: () => void;
 }
 
-export const ProjectList: React.FC<ProjectListProps> = ({ projects, onSelectProject, risks }) => {
+export const ProjectList: React.FC<ProjectListProps> = ({ projects, onSelectProject, risks, onCreateProject }) => {
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('todos');
@@ -55,8 +57,18 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onSelectProj
           <p className="text-sm text-slate-500">Administración y control de iniciativas de la cooperativa.</p>
         </div>
         
-        {/* Toggle Vista (Fase 4D) */}
-        <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200 w-full sm:w-auto justify-between sm:justify-start shrink-0">
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto shrink-0">
+          {onCreateProject && (
+            <button
+              onClick={onCreateProject}
+              className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-xs"
+            >
+              <Plus className="w-4 h-4" /> Nuevo Proyecto
+            </button>
+          )}
+
+          {/* Toggle Vista (Fase 4D) */}
+          <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200 w-full sm:w-auto justify-between sm:justify-start shrink-0">
           <button
             onClick={() => setViewMode('table')}
             className={`flex-1 sm:flex-initial px-4 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all cursor-pointer text-center ${
@@ -79,6 +91,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onSelectProj
           </button>
         </div>
       </div>
+    </div>
 
       {/* Filters Bar */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row gap-4 items-center">
