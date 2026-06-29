@@ -214,19 +214,19 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
             {/* Left Column: Scope & Objectives */}
             <div className="lg:col-span-2 space-y-6">
 
-              {/* Stepper de Fases del Proyecto (Fase 4C) */}
-              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h3 className="font-bold text-slate-800 text-[11px] uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">
+              {/* Stepper de Fases del Proyecto - Vista Desktop (Fase 4D) */}
+              <div className="hidden sm:block bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                <h3 className="font-bold text-slate-800 text-[10px] uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">
                   Etapa del Ciclo de Vida del Proyecto
                 </h3>
-                <div className="relative flex items-center justify-between w-full mt-2 px-2">
+                <div className="relative flex items-center justify-between w-full mt-2">
                   {/* Línea de fondo */}
-                  <div className="absolute left-6 right-6 top-4 h-0.5 bg-slate-200 z-0" />
+                  <div className="absolute left-[10%] right-[10%] top-4 h-0.5 bg-slate-200 z-0" />
                   
                   {/* Línea activa */}
                   <div 
-                    className="absolute left-6 top-4 h-0.5 bg-sky-600 transition-all duration-300 z-0" 
-                    style={{ width: `${(activeStep / (steps.length - 1)) * 90}%` }}
+                    className="absolute left-[10%] top-4 h-0.5 bg-sky-600 transition-all duration-300 z-0" 
+                    style={{ width: `${(activeStep / (steps.length - 1)) * 80}%` }}
                   />
 
                   {steps.map((step, idx) => {
@@ -257,6 +257,35 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                       </div>
                     );
                   })}
+                </div>
+              </div>
+
+              {/* Stepper de Fases del Proyecto - Vista Móvil Adaptativa (Fase 4D) */}
+              <div className="block sm:hidden bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                <h3 className="font-bold text-slate-800 text-[10px] uppercase tracking-wider border-b border-slate-100 pb-1.5">
+                  Etapa del Ciclo de Vida
+                </h3>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-semibold uppercase">Fase Actual</span>
+                    <span className="text-sm font-black text-sky-600">
+                      {activeStep + 1}/5 - {steps[activeStep]}
+                    </span>
+                  </div>
+                  <div className="flex gap-1.5 shrink-0">
+                    {steps.map((_, idx) => (
+                      <div 
+                        key={idx} 
+                        className={`w-3.5 h-2 rounded-full transition-colors ${
+                          idx < activeStep 
+                            ? 'bg-emerald-500' 
+                            : idx === activeStep 
+                              ? 'bg-sky-600' 
+                              : 'bg-slate-200'
+                        }`} 
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
               
