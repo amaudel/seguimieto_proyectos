@@ -15,7 +15,8 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 | **Fase 4B** | Seguridad, Autenticación y RLS | Completado | 4.0 | 2.5 | -1.5 | -37.5% |
 | **Fase 4C** | Refactor y Mejoras Visuales UX | Completado | 6.0 | 4.8 | -1.2 | -20.0% |
 | **Fase 4D** | Pulido Visual y QA Responsivo | Completado | 4.0 | 3.5 | -0.5 | -12.5% |
-| **Total** | **Gobernanza Completa del Proyecto** | **En Progreso**| **45.0** | **29.5** | -- | -- |
+| **Fase 5A** | Formulario Guiado de Proyectos | Completado | 6.0 | 4.9 | -1.1 | -18.3% |
+| **Total** | **Gobernanza Completa del Proyecto** | **En Progreso**| **51.0** | **34.4** | -- | -- |
 
 ---
 
@@ -120,3 +121,17 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 | Stepper Adaptativo Responsivo | 2026-06-29 | A. Delgado / AI | 1.5 | 1.2 | Finalizado | Vista horizontal centrada en desktop y vista compacta de paso en móviles. |
 | Banner de Datos y Botón de Logout | 2026-06-29 | A. Delgado / AI | 0.5 | 0.5 | Finalizado | Rediseño de banner con icono Database y corrección de clase de color en Sidebar. |
 | Verificación final y build de producción | 2026-06-29 | A. Delgado / AI | 0.5 | 0.3 | Finalizado | Testeo de responsividad y build de producción exitoso. |
+
+---
+
+### Fase 5A: Formulario Guiado para Nuevos Proyectos (Completado)
+* **Fecha de Inicio**: 2026-06-29
+* **Fecha de Fin**: 2026-06-29
+
+| Actividad / Tarea | Fecha | Responsable | Horas Estimadas | Horas Reales | Estado | Detalle / Entregables |
+| :--- | :--- | :--- | :---: | :---: | :---: | :--- |
+| Diagnóstico, Plan y Migración SQL | 2026-06-29 | A. Delgado / AI | 0.5 | 0.5 | Finalizado | Inspección del esquema projects y creación de script `5a_business_case_columns.sql`. |
+| Tipado TypeScript de Projects | 2026-06-29 | A. Delgado / AI | 1.0 | 0.8 | Finalizado | Actualización de interfaz Project en `types.ts` y mappers en `projectsService.ts`. |
+| Wizard Component de Nuevos Proyectos | 2026-06-29 | A. Delgado / AI | 2.5 | 2.0 | Finalizado | Maquetación del wizard en 5 pasos controlado con validaciones de fechas y esfuerzo. |
+| Integración de Auditoría y RLS | 2026-06-29 | A. Delgado / AI | 1.5 | 1.2 | Finalizado | Recuperación de profile_id asíncrona al iniciar sesión, control de ruteo y handler de inserción. |
+| Testeo Local y Validación de Compilación | 2026-06-29 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Compilación exitosa con `npm run build` en 553ms sin advertencias. |
