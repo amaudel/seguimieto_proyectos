@@ -32,6 +32,17 @@ export interface Project {
   scope: string;
   expected_result: string;
   execution_style: ExecutionStyle;
+  
+  // Nuevas columnas de la Fase 5A (Caso de Negocio)
+  priority?: 'Alta' | 'Media' | 'Baja';
+  problem_opportunity?: string;
+  justification?: string;
+  strategic_alignment?: string;
+  expected_benefits?: string;
+  risk_of_not_doing?: string;
+  initial_phase?: string;
+  initial_health?: 'Sin alertas' | 'Con alertas' | 'Crítica';
+  bpmo_observations?: string;
 }
 
 export interface ProjectAdvance {
