@@ -11,6 +11,7 @@ import {
 import { Dashboard } from './components/Dashboard';
 import { ProjectList } from './components/ProjectList';
 import { ProjectDetail } from './components/ProjectDetail';
+import { NewProject } from './components/NewProject';
 import type { EntityId, Project, ProjectAdvance, ProjectActivity, ProjectMeeting, ProjectCommitment, TimeLog, ProjectRisk } from './types';
 import {
   getProjects,
@@ -19,7 +20,8 @@ import {
   getMeetings,
   getCommitments,
   getTimeLogs,
-  getRisks
+  getRisks,
+  createProject
 } from './services/projectsService';
 import { 
   LayoutDashboard, 
@@ -37,9 +39,10 @@ import { Login } from './components/Login';
 function App() {
   const [session, setSession] = useState<any>(null);
   const [loadingSession, setLoadingSession] = useState(isSupabaseConfigured);
-  const [view, setView] = useState<'dashboard' | 'projects' | 'detail'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'projects' | 'detail' | 'new-project'>('dashboard');
   const [selectedProjectId, setSelectedProjectId] = useState<EntityId | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [userProfileId, setUserProfileId] = useState<string | null>(null);
 
   // Estados dinámicos para datos con fallback a mock inicial en memoria
   const [projects, setProjects] = useState<Project[]>(mockProjects);
@@ -53,20 +56,47 @@ function App() {
   // Escuchar sesión de Supabase Auth
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) {
+      setSession({ user: { email: 'andres.delgado@coop.fi' } });
+      setUserProfileId('11111111-1111-1111-1111-111111111101');
       setLoadingSession(false);
       return;
     }
 
+    const fetchUserProfileId = async (authUserId: string) => {
+      try {
+        const { data, error } = await supabase!
+          .from('profiles')
+          .select('id')
+          .eq('auth_user_id', authUserId)
+          .single();
+        if (error) throw error;
+        if (data) {
+          setUserProfileId(data.id);
+        }
+      } catch (err) {
+        console.error('Error resolviendo profile_id del usuario administrador:', err);
+        setUserProfileId(null);
+      }
+    };
+
     // Cargar sesión inicial
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      setSession(initialSession);
       setLoadingSession(false);
+      if (initialSession?.user) {
+        fetchUserProfileId(initialSession.user.id);
+      }
     });
 
     // Suscribirse a cambios
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
       setSession(currentSession);
       setLoadingSession(false);
+      if (currentSession?.user) {
+        fetchUserProfileId(currentSession.user.id);
+      } else {
+        setUserProfileId(null);
+      }
     });
 
     return () => {
@@ -122,9 +152,23 @@ function App() {
     setIsSidebarOpen(false);
   };
 
-  const handleNavigate = (newView: 'dashboard' | 'projects' | 'detail') => {
+  const handleNavigate = (newView: 'dashboard' | 'projects' | 'detail' | 'new-project') => {
     setView(newView);
     setIsSidebarOpen(false);
+  };
+
+  const handleSaveNewProject = async (projectData: Omit<Project, 'id' | 'leader_name'>) => {
+    if (!userProfileId) {
+      throw new Error('No se ha podido resolver tu identificador de perfil (profile_id) en el sistema. Creación bloqueada.');
+    }
+    try {
+      const newProj = await createProject(projectData, userProfileId);
+      setProjects(prev => [newProj, ...prev]);
+      setView('projects');
+    } catch (err) {
+      console.error('Error guardando el nuevo proyecto:', err);
+      throw err;
+    }
   };
 
   // Pantalla de carga mientras se verifica sesión
@@ -288,6 +332,15 @@ function App() {
             projects={projects}
             onSelectProject={handleSelectProject}
             risks={risks}
+            onCreateProject={() => setView('new-project')}
+          />
+        )}
+
+        {view === 'new-project' && (
+          <NewProject 
+            onSave={handleSaveNewProject}
+            onCancel={() => setView('projects')}
+            userProfileId={userProfileId}
           />
         )}
 
