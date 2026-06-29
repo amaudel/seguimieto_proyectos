@@ -26,11 +26,16 @@ import {
   Briefcase, 
   Menu, 
   X, 
-  Building2
+  Building2,
+  LogOut
 } from 'lucide-react';
+import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
+import { Login } from './components/Login';
 
 
 function App() {
+  const [session, setSession] = useState<any>(null);
+  const [loadingSession, setLoadingSession] = useState(isSupabaseConfigured);
   const [view, setView] = useState<'dashboard' | 'projects' | 'detail'>('dashboard');
   const [selectedProjectId, setSelectedProjectId] = useState<EntityId | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -44,8 +49,35 @@ function App() {
   const [timeLogs, setTimeLogs] = useState<TimeLog[]>(mockTimeLogs);
   const [risks, setRisks] = useState<ProjectRisk[]>(mockRisks);
 
+  // Escuchar sesión de Supabase Auth
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) {
+      setLoadingSession(false);
+      return;
+    }
+
+    // Cargar sesión inicial
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoadingSession(false);
+    });
+
+    // Suscribirse a cambios
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      setSession(currentSession);
+      setLoadingSession(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
   // Carga asíncrona de datos desde Supabase con fallback automático
   useEffect(() => {
+    // Si Supabase está configurado pero no hay sesión, no cargar datos de base de datos
+    if (isSupabaseConfigured && !session) return;
+
     async function loadData() {
       try {
         const [
@@ -78,7 +110,7 @@ function App() {
       }
     }
     loadData();
-  }, []);
+  }, [session]);
 
   // Find active project if detail view
   const activeProject = projects.find(p => String(p.id) === String(selectedProjectId));
@@ -93,6 +125,26 @@ function App() {
     setView(newView);
     setIsSidebarOpen(false);
   };
+
+  // Pantalla de carga mientras se verifica sesión
+  if (loadingSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-100">
+        <div className="flex flex-col items-center">
+          <svg className="animate-spin h-10 w-10 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span className="text-slate-600 font-semibold text-sm">Verificando sesión...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Si Supabase está configurado pero no hay sesión iniciada, mostrar únicamente el Login
+  if (isSupabaseConfigured && !session) {
+    return <Login onLoginSuccess={() => setView('dashboard')} />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row text-slate-800 antialiased font-sans">
@@ -156,18 +208,33 @@ function App() {
         </div>
 
         {/* User profile / Footer area */}
-        <div className="p-4 border-t border-sky-900">
+        <div className="p-4 border-t border-sky-900 space-y-3">
           <div className="flex items-center gap-3 bg-sky-950/40 p-3 rounded-lg border border-sky-900/40">
-            <div className="w-8 h-8 rounded-full bg-sky-600 flex items-center justify-center font-bold text-xs text-white">
-              AD
+            <div className="w-8 h-8 rounded-full bg-sky-600 flex items-center justify-center font-bold text-xs text-white shrink-0">
+              {session?.user?.email ? session.user.email.substring(0, 2).toUpperCase() : 'AD'}
             </div>
-            <div>
-              <span className="font-semibold text-xs block text-white">Andrés Delgado</span>
-              <span className="text-[10px] text-sky-300 font-medium block">BPMO Cooperativa</span>
+            <div className="min-w-0 flex-1">
+              <span className="font-semibold text-xs block text-white truncate">
+                {session?.user?.email || 'Andrés Delgado'}
+              </span>
+              <span className="text-[10px] text-sky-300 font-medium block">
+                {isSupabaseConfigured ? 'Admin Mejora Continua' : 'BPMO Cooperativa'}
+              </span>
             </div>
           </div>
-          <div className="text-center text-[9px] text-slate-400 mt-3 font-semibold uppercase tracking-wider">
-            Versión 1.0.0 (Fase 1 Mock)
+
+          {isSupabaseConfigured && session && (
+            <button
+              onClick={() => supabase?.auth.signOut()}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-sky-850 rounded-lg text-xs font-semibold tracking-wide text-sky-300 hover:bg-sky-900/40 hover:text-white transition-all cursor-pointer bg-sky-950/30"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              Cerrar Sesión
+            </button>
+          )}
+
+          <div className="text-center text-[9px] text-slate-400 font-semibold uppercase tracking-wider">
+            Versión 1.1.0 (Fase 4B)
           </div>
         </div>
       </aside>
@@ -182,6 +249,25 @@ function App() {
 
       {/* Main Workspace Area */}
       <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        
+        {/* Banner de Origen de Datos (Fase 4B.1) */}
+        <div className={`mb-4 px-4 py-2 rounded-lg text-xs font-semibold flex items-center justify-between border ${
+          isSupabaseConfigured 
+            ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+            : 'bg-amber-50 text-amber-800 border-amber-200'
+        }`}>
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${isSupabaseConfigured ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+            <span>
+              {isSupabaseConfigured 
+                ? 'Conexión activa a base de datos de producción (Supabase)' 
+                : 'Modo Offline: Operando con base de datos local (Mock)'}
+            </span>
+          </div>
+          <span className="text-[10px] uppercase font-bold tracking-wider opacity-75">
+            {isSupabaseConfigured ? 'Producción' : 'Offline / Demo'}
+          </span>
+        </div>
         
         {/* Render View conditionally */}
         {view === 'dashboard' && (
