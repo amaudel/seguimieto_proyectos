@@ -391,34 +391,60 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                 <p className="text-xs text-slate-700 leading-relaxed">{project.expected_result}</p>
               </div>
 
-              {/* Caso de Negocio (Fase 4C) */}
+              {/* Caso de Negocio (Fase 5A) */}
               <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
                 <div className="border-b border-slate-100 pb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
                   <h3 className="font-bold text-slate-900 text-sm">Caso de Negocio e Impacto</h3>
-                  <span className="text-[9px] text-amber-600 font-bold uppercase tracking-wider bg-amber-50 border border-amber-200 px-2 py-0.5 rounded w-fit">
-                    ⚠️ Pendiente de Formalización para Fase 5
-                  </span>
+                  {project.priority && (
+                    <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded w-fit border ${
+                      project.priority === 'Alta' 
+                        ? 'bg-red-50 text-red-700 border-red-200' 
+                        : project.priority === 'Media' 
+                          ? 'bg-amber-50 text-amber-700 border-amber-200' 
+                          : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    }`}>
+                      Prioridad: {project.priority}
+                    </span>
+                  )}
                 </div>
                 
-                <div className="space-y-3 text-xs">
+                <div className="space-y-4 text-xs">
+                  {project.problem_opportunity && (
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-0.5">Problema u Oportunidad Detectada</span>
+                      <p className="text-slate-700 font-medium leading-relaxed">{project.problem_opportunity}</p>
+                    </div>
+                  )}
                   <div>
                     <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-0.5">Justificación</span>
-                    <p className="text-slate-500 italic">
-                      Información de justificación corporativa pendiente de integración con base de datos.
+                    <p className="text-slate-700 font-medium leading-relaxed">
+                      {project.justification || '(Justificación no registrada)'}
                     </p>
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-0.5">Alineación con Objetivos de la Cooperativa</span>
-                    <p className="text-slate-500 italic">
-                      Definición de pilares estratégicos institucionales pendiente de mapeo físico.
+                    <p className="text-slate-700 font-medium leading-relaxed">
+                      {project.strategic_alignment || '(Alineación estratégica no registrada)'}
                     </p>
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-0.5">beneficios institucionales, operativos y para socios</span>
-                    <p className="text-slate-500 italic">
-                      Cuantificación de impactos y retorno cooperativo pendiente de formalización.
+                    <p className="text-slate-700 font-medium leading-relaxed">
+                      {project.expected_benefits || '(beneficios institucionales, operativos y para socios no registrados)'}
                     </p>
                   </div>
+                  {project.risk_of_not_doing && (
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider mb-0.5">Riesgo de No Ejecutar la Iniciativa</span>
+                      <p className="text-slate-700 font-medium leading-relaxed">{project.risk_of_not_doing}</p>
+                    </div>
+                  )}
+                  {project.bpmo_observations && (
+                    <div className="bg-sky-50/50 p-3 rounded-lg border border-sky-100">
+                      <span className="text-[10px] text-sky-800 block font-bold uppercase tracking-wider mb-1">Observaciones BPMO / Mejora Continua</span>
+                      <p className="text-sky-950 font-medium leading-relaxed">{project.bpmo_observations}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
