@@ -286,6 +286,7 @@ function App() {
           <ProjectList 
             projects={projects}
             onSelectProject={handleSelectProject}
+            risks={risks}
           />
         )}
 
