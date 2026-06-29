@@ -27,7 +27,8 @@ import {
   Menu, 
   X, 
   Building2,
-  LogOut
+  LogOut,
+  Database
 } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
 import { Login } from './components/Login';
@@ -226,7 +227,7 @@ function App() {
           {isSupabaseConfigured && session && (
             <button
               onClick={() => supabase?.auth.signOut()}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-sky-850 rounded-lg text-xs font-semibold tracking-wide text-sky-300 hover:bg-sky-900/40 hover:text-white transition-all cursor-pointer bg-sky-950/30"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-sky-800/60 rounded-lg text-xs font-semibold tracking-wide text-sky-300 hover:bg-sky-900/40 hover:text-white transition-all duration-200 ease-in-out cursor-pointer bg-sky-950/30"
             >
               <LogOut className="w-3.5 h-3.5" />
               Cerrar Sesión
@@ -234,7 +235,7 @@ function App() {
           )}
 
           <div className="text-center text-[9px] text-slate-400 font-semibold uppercase tracking-wider">
-            Versión 1.1.0 (Fase 4B)
+            Versión 1.2.0 (Fase 4D)
           </div>
         </div>
       </aside>
@@ -250,21 +251,21 @@ function App() {
       {/* Main Workspace Area */}
       <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
         
-        {/* Banner de Origen de Datos (Fase 4B.1) */}
-        <div className={`mb-4 px-4 py-2 rounded-lg text-xs font-semibold flex items-center justify-between border ${
+        {/* Banner de Origen de Datos (Fase 4D) */}
+        <div className={`mb-4 px-3 py-1.5 rounded-lg text-[11px] font-semibold flex items-center justify-between border ${
           isSupabaseConfigured 
             ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
             : 'bg-amber-50 text-amber-800 border-amber-200'
         }`}>
           <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${isSupabaseConfigured ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+            <Database className={`w-3.5 h-3.5 ${isSupabaseConfigured ? 'text-emerald-600' : 'text-amber-600'}`} />
             <span>
               {isSupabaseConfigured 
                 ? 'Conexión activa a base de datos de producción (Supabase)' 
                 : 'Modo Offline: Operando con base de datos local (Mock)'}
             </span>
           </div>
-          <span className="text-[10px] uppercase font-bold tracking-wider opacity-75">
+          <span className="text-[9px] uppercase font-bold tracking-wider opacity-75">
             {isSupabaseConfigured ? 'Producción' : 'Offline / Demo'}
           </span>
         </div>
