@@ -55,11 +55,11 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onSelectProj
           <p className="text-sm text-slate-500">Administración y control de iniciativas de la cooperativa.</p>
         </div>
         
-        {/* Toggle Vista (Fase 4C) */}
-        <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200 self-start sm:self-auto shrink-0">
+        {/* Toggle Vista (Fase 4D) */}
+        <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200 w-full sm:w-auto justify-between sm:justify-start shrink-0">
           <button
             onClick={() => setViewMode('table')}
-            className={`px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all cursor-pointer ${
+            className={`flex-1 sm:flex-initial px-4 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all cursor-pointer text-center ${
               viewMode === 'table'
                 ? 'bg-white text-slate-800 shadow-xs border border-slate-200/50'
                 : 'text-slate-500 hover:text-slate-800'
@@ -69,7 +69,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onSelectProj
           </button>
           <button
             onClick={() => setViewMode('cards')}
-            className={`px-3 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all cursor-pointer ${
+            className={`flex-1 sm:flex-initial px-4 py-1.5 rounded-md text-xs font-semibold tracking-wide transition-all cursor-pointer text-center ${
               viewMode === 'cards'
                 ? 'bg-white text-slate-800 shadow-xs border border-slate-200/50'
                 : 'text-slate-500 hover:text-slate-800'
