@@ -42,6 +42,17 @@ const mapProject = (dbProj: any): Project => ({
   scope: dbProj.scope || '',
   expected_result: dbProj.expected_result || '',
   execution_style: dbProj.execution_style,
+  
+  // Nuevas columnas de la Fase 5A
+  priority: dbProj.priority || 'Media',
+  problem_opportunity: dbProj.problem_opportunity || '',
+  justification: dbProj.justification || '',
+  strategic_alignment: dbProj.strategic_alignment || '',
+  expected_benefits: dbProj.expected_benefits || '',
+  risk_of_not_doing: dbProj.risk_of_not_doing || '',
+  initial_phase: dbProj.initial_phase || 'Iniciación',
+  initial_health: dbProj.initial_health || 'Sin alertas',
+  bpmo_observations: dbProj.bpmo_observations || ''
 });
 
 const mapAdvance = (dbAdv: any): ProjectAdvance => ({
@@ -324,5 +335,98 @@ export const getRisks = async (projectId?: EntityId): Promise<ProjectRisk[]> => 
     return projectId 
       ? mockRisks.filter(r => String(r.project_id) === String(projectId))
       : mockRisks;
+  }
+};
+
+export const getLeaders = async (): Promise<{ id: string; first_name: string; last_name: string; }[]> => {
+  if (!isSupabaseConfigured || !supabase) {
+    return [
+      { id: '11111111-1111-1111-1111-111111111101', first_name: 'Carlos', last_name: 'Mendoza' },
+      { id: '11111111-1111-1111-1111-111111111102', first_name: 'Elena', last_name: 'Ríos' },
+      { id: '11111111-1111-1111-1111-111111111103', first_name: 'Jorge', last_name: 'Paz' }
+    ];
+  }
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name');
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    console.warn("Fallo de lectura en profiles (líderes). Retornando locales.", err);
+    return [
+      { id: '11111111-1111-1111-1111-111111111101', first_name: 'Carlos', last_name: 'Mendoza' },
+      { id: '11111111-1111-1111-1111-111111111102', first_name: 'Elena', last_name: 'Ríos' },
+      { id: '11111111-1111-1111-1111-111111111103', first_name: 'Jorge', last_name: 'Paz' }
+    ];
+  }
+};
+
+export const createProject = async (
+  project: Omit<Project, 'id' | 'leader_name'>,
+  userId: string
+): Promise<Project> => {
+  if (!userId) {
+    throw new Error('El identificador del perfil de usuario no está disponible. No se puede auditar la creación.');
+  }
+
+  const payload = {
+    project_code: project.code,
+    name: project.name,
+    description: project.description,
+    estimated_effort_hours: Number(project.estimatedEffortHours),
+    status: project.status,
+    leader_id: project.leader_id || null,
+    sponsor: project.sponsor,
+    responsible_func: project.responsible_func,
+    responsible_exec: project.responsible_exec,
+    area_solicitante: project.area_solicitante,
+    start_date: project.start_date,
+    end_date: project.end_date,
+    objective: project.objective,
+    scope: project.scope,
+    expected_result: project.expected_result,
+    execution_style: project.execution_style,
+    created_by: userId,
+    updated_by: userId,
+    priority: project.priority || 'Media',
+    problem_opportunity: project.problem_opportunity || null,
+    justification: project.justification || null,
+    strategic_alignment: project.strategic_alignment || null,
+    expected_benefits: project.expected_benefits || null,
+    risk_of_not_doing: project.risk_of_not_doing || null,
+    initial_phase: project.initial_phase || 'Iniciación',
+    initial_health: project.initial_health || 'Sin alertas',
+    bpmo_observations: project.bpmo_observations || null
+  };
+
+  if (!isSupabaseConfigured || !supabase) {
+    const newProj: Project = {
+      ...project,
+      id: Math.random().toString(36).substr(2, 9),
+      leader_name: 'Líder Asignado (Mock)'
+    };
+    mockProjects.push(newProj);
+    return newProj;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('projects')
+      .insert([payload])
+      .select('*, leader:profiles!projects_leader_id_fkey(first_name, last_name)')
+      .single();
+
+    if (error) {
+      if (error.code === '23505' || (error.message && error.message.includes('duplicate'))) {
+        throw new Error('Ya existe un proyecto con ese código.');
+      }
+      throw error;
+    }
+
+    return mapProject(data);
+  } catch (err: any) {
+    console.error('Error insertando proyecto en Supabase:', err);
+    throw err;
   }
 };
