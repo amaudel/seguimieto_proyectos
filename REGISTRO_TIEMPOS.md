@@ -12,8 +12,9 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 | **Fase 2** | Modelo de Datos Físico y SQL | Completado | 5.0 | 4.0 | -1.0 | -20.0% |
 | **Fase 3** | Integración de Supabase y Auth | Completado | 12.0 | 3.5 | -8.5 | -70.8% |
 | **Fase 4A** | Validación Supabase y Vercel | Completado | 4.0 | 2.7 | -1.3 | -32.5% |
-| **Fase 4B** | Refactor, Pruebas y Despliegue | Pendiente | 8.0 | 0.0 | -- | -- |
-| **Total** | **Gobernanza Completa del Proyecto** | **En Progreso**| **39.0** | **18.7** | -- | -- |
+| **Fase 4B** | Seguridad, Autenticación y RLS | Completado | 4.0 | 2.5 | -1.5 | -37.5% |
+| **Fase 4C** | Refactor y Mejoras Visuales UX | Pendiente | 6.0 | 0.0 | -- | -- |
+| **Total** | **Gobernanza Completa del Proyecto** | **En Progreso**| **41.0** | **21.2** | -- | -- |
 
 ---
 
@@ -80,11 +81,25 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 
 ---
 
-### Fase 4B: Refactor, Pruebas y Despliegue Final (Pendiente)
+### Fase 4B: Seguridad, Autenticación y RLS (Completado)
+* **Fecha de Inicio**: 2026-06-26
+* **Fecha de Fin**: 2026-06-29
+
+| Actividad / Tarea | Fecha | Responsable | Horas Estimadas | Horas Reales | Estado | Detalle / Entregables |
+| :--- | :--- | :--- | :---: | :---: | :---: | :--- |
+| Plan de Trabajo e Idempotencia SQL | 2026-06-26 | A. Delgado / AI | 0.5 | 0.5 | Finalizado | Creación del plan Fase 4B y migración `auth_rls_setup.sql`. |
+| Componente Login React y Control de Sesión | 2026-06-29 | A. Delgado / AI | 1.5 | 1.2 | Finalizado | Creación de `Login.tsx` y wrapper de sesión en `App.tsx` que bloquea la app sin login. |
+| Logout e Indicador Origen Datos (Fase 4B.1) | 2026-06-29 | A. Delgado / AI | 0.5 | 0.5 | Finalizado | Botón de cerrar sesión en Sidebar y banner superior dinámico visible tras iniciar sesión. |
+| Pruebas de compilación | 2026-06-29 | A. Delgado / AI | 0.5 | 0.3 | Finalizado | Validación con `npm run build` exitosa. |
+| Documentación Técnica de Auth y RLS | 2026-06-29 | A. Delgado / AI | 1.0 | 0.0 | Finalizado | Creación de `SUPABASE_AUTH_RLS.md` y guías. |
+
+---
+
+### Fase 4C: Refactor y Mejoras Visuales UX (Pendiente)
 * **Fecha de Inicio Estimada**: Por definir
 
 | Actividad / Tarea | Horas Estimadas | Estado | Detalle / Entregables |
 | :--- | :---: | :---: | :--- |
-| Pruebas Unitarias e Integración de Flujo | 3.0 | Pendiente | Casos de uso de flujos (Ingresar horas, subir evidencia). |
-| Pulido UX/UI del Tablero | 2.0 | Pendiente | Feedback visual e indicadores de carga (spinners). |
-| Configuración de Producción y Despliegue | 3.0 | Pendiente | Despliegue en Vercel o similar e inicialización definitiva. |
+| Stepper de Fases en Resumen | 2.0 | Pendiente | Componente visual en Resumen de Proyecto. |
+| Vista de Tarjetas Ejecutivas | 2.5 | Pendiente | Alternar vista entre tabla y tarjetas en ProjectList.tsx. |
+| Refactorización del Resumen (Caso de Negocio) | 1.5 | Pendiente | Incorporación de secciones de justificación y alineación. |
