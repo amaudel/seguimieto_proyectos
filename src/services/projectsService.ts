@@ -339,26 +339,29 @@ export const getRisks = async (projectId?: EntityId): Promise<ProjectRisk[]> => 
 };
 
 export const getLeaders = async (): Promise<{ id: string; first_name: string; last_name: string; }[]> => {
+  const localLeaders = [
+    { id: '11111111-1111-1111-1111-111111111101', first_name: 'Carlos', last_name: 'Mendoza' },
+    { id: '11111111-1111-1111-1111-111111111102', first_name: 'Elena', last_name: 'Ríos' },
+    { id: '11111111-1111-1111-1111-111111111103', first_name: 'Jorge', last_name: 'Paz' }
+  ];
+
   if (!isSupabaseConfigured || !supabase) {
-    return [
-      { id: '11111111-1111-1111-1111-111111111101', first_name: 'Carlos', last_name: 'Mendoza' },
-      { id: '11111111-1111-1111-1111-111111111102', first_name: 'Elena', last_name: 'Ríos' },
-      { id: '11111111-1111-1111-1111-111111111103', first_name: 'Jorge', last_name: 'Paz' }
-    ];
+    return localLeaders;
   }
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('profiles')
       .select('id, first_name, last_name');
     if (error) throw error;
-    return data || [];
+    
+    if (!data || data.length === 0) {
+      console.warn("La consulta a profiles devolvió 0 registros. Usando líderes locales de respaldo.");
+      return localLeaders;
+    }
+    return data;
   } catch (err) {
     console.warn("Fallo de lectura en profiles (líderes). Retornando locales.", err);
-    return [
-      { id: '11111111-1111-1111-1111-111111111101', first_name: 'Carlos', last_name: 'Mendoza' },
-      { id: '11111111-1111-1111-1111-111111111102', first_name: 'Elena', last_name: 'Ríos' },
-      { id: '11111111-1111-1111-1111-111111111103', first_name: 'Jorge', last_name: 'Paz' }
-    ];
+    return localLeaders;
   }
 };
 
