@@ -20,7 +20,9 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 | **Fase 5C** | Registro de Riesgos e Impedimentos | Completado | 5.0 | 4.0 | -1.0 | -20.0% |
 | **Fase 5D** | Registro de Compromisos del Proyecto| Completado | 5.0 | 3.9 | -1.1 | -22.0% |
 | **Fase 6A** | Estado Controlado de Compromisos | Completado | 4.0 | 3.2 | -0.8 | -20.0% |
-| **Total** | **Gobernanza Completa del Proyecto** | **En Progreso**| **70.0** | **49.4** | -- | -- |
+| **Fase 6B** | Estado Controlado de Riesgos | Completado | 4.0 | 3.2 | -0.8 | -20.0% |
+| **Fase 6C** | Gestión de Actividades del Proyecto | Completado | 5.0 | 4.0 | -1.0 | -20.0% |
+| **Total** | **Gobernanza Completa del Proyecto** | **En Progreso**| **79.0** | **56.6** | -- | -- |
 
 ---
 
@@ -204,4 +206,17 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 | Modal de Cambio de Estado (React) | 2026-06-30 | A. Delgado / AI | 1.5 | 1.2 | Finalizado | Maquetación del componente modal controlado `RiskStatusModal.tsx` con reglas opcionales/obligatorias de notas para Mitigado y Cerrado. |
 | Integración de API y Reversión UX | 2026-06-30 | A. Delgado / AI | 1.5 | 1.2 | Finalizado | Vinculación del dropdown select en la tabla con `updateProjectRiskStatus` con mecanismo de fallback de reversión si falla el API. |
 | Compilación y Validación Final | 2026-06-30 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Ejecución exitosa de `npm run build` en 443ms garantizando la robustez de los callbacks. |
+
+---
+
+### Fase 6C: Gestión de Actividades del Proyecto (Completado)
+* **Fecha de Inicio**: 2026-06-30
+* **Fecha de Fin**: 2026-06-30
+
+| Actividad / Tarea | Fecha | Responsable | Horas Estimadas | Horas Reales | Estado | Detalle / Entregables |
+| :--- | :--- | :--- | :---: | :---: | :---: | :--- |
+| Diagnóstico de Esquema y SQL RLS | 2026-06-30 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Verificación física de description y progress_pct en schema.sql, e implementación del script RLS `6c_project_items_rls.sql`. |
+| Formulario de Nueva Actividad (Modal) | 2026-06-30 | A. Delgado / AI | 2.0 | 1.6 | Finalizado | Maquetación del componente modal controlado `NewActivityModal.tsx` forzando la asignación obligatoria del responsable y validación de horas estimadas. |
+| Integración de API y Callbacks | 2026-06-30 | A. Delgado / AI | 2.0 | 1.6 | Finalizado | Implementación de createProjectActivity, updateProjectActivityStatus y vinculación con la UI y dropdown select interactivo con reversión en caso de error. |
+| Compilación y Validación Final | 2026-06-30 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Ejecución exitosa de `npm run build` en 696ms con cero errores en types.ts y componentes. |
 
