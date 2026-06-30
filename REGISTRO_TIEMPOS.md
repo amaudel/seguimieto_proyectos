@@ -23,7 +23,8 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 | **Fase 6B** | Estado Controlado de Riesgos | Completado | 4.0 | 3.2 | -0.8 | -20.0% |
 | **Fase 6C** | Gestión de Actividades del Proyecto | Completado | 5.0 | 4.0 | -1.0 | -20.0% |
 | **Fase 6D** | Registro de Tiempos de Esfuerzo | Completado | 4.0 | 3.2 | -0.8 | -20.0% |
-| **Total** | **Gobernanza Completa del Proyecto** | **En Progreso**| **83.0** | **59.8** | -- | -- |
+| **Fase 6E** | Gestión de Reuniones y Minutas | Completado | 5.0 | 4.0 | -1.0 | -20.0% |
+| **Total** | **Gobernanza Completa del Proyecto** | **En Progreso**| **88.0** | **63.8** | -- | -- |
 
 ---
 
@@ -233,4 +234,17 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 | Formulario de Registro de Tiempos | 2026-06-30 | A. Delgado / AI | 1.5 | 1.2 | Finalizado | Maquetación del componente modal controlled `NewTimeLogModal.tsx` con reglas estrictas de enteros mayores a cero, fecha no futura y actividad obligatoria. |
 | Integración de API y KPIs | 2026-06-30 | A. Delgado / AI | 1.5 | 1.2 | Finalizado | Creación del query helper `createTimeLog` en projectsService con mapeo relacional y callback `onAddTimeLog` para actualización en caliente. |
 | Compilación y Validación Final | 2026-06-30 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Ejecución exitosa de `npm run build` en 539ms garantizando la robustez de los tipos y vistas TSX. |
+
+---
+
+### Fase 6E: Gestión de Reuniones y Minutas del Proyecto (Completado)
+* **Fecha de Inicio**: 2026-06-30
+* **Fecha de Fin**: 2026-06-30
+
+| Actividad / Tarea | Fecha | Responsable | Horas Estimadas | Horas Reales | Estado | Detalle / Entregables |
+| :--- | :--- | :--- | :---: | :---: | :---: | :--- |
+| Diagnóstico de Esquema y SQL RLS | 2026-06-30 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Diagnóstico físico de `project_meetings` y `meeting_attendees` en schema.sql, y creación de políticas RLS en `6e_project_meetings_rls.sql`. |
+| Formulario de Nueva Reunión (Minuta) | 2026-06-30 | A. Delgado / AI | 2.0 | 1.6 | Finalizado | Maquetación del modal controlled `NewMeetingModal.tsx` que valida campos requeridos, asocia asistentes reales y bloquea campos vacíos. |
+| Integración de Cascada y Cards UI | 2026-06-30 | A. Delgado / AI | 2.0 | 1.6 | Finalizado | Implementación en projectsService de la cascada de inserción en `project_meetings` y `meeting_attendees` secuencialmente, y rediseño de la UI con tarjetas expandibles. |
+| Compilación y Validación Final | 2026-06-30 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Ejecución exitosa de `npm run build` en 958ms con cero errores en types.ts y componentes. |
 
