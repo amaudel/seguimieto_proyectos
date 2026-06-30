@@ -814,3 +814,84 @@ export const createTimeLog = async (
     throw err;
   }
 };
+
+export const createProjectMeeting = async (
+  meeting: Omit<ProjectMeeting, 'id' | 'attendees'>,
+  attendeesProfileIds: string[],
+  userId: string
+): Promise<ProjectMeeting> => {
+  if (!userId) {
+    throw new Error('El identificador del perfil de usuario no está disponible. Registro bloqueado.');
+  }
+
+  const payload = {
+    project_id: meeting.project_id,
+    date_time: meeting.date_time,
+    type: meeting.type,
+    topics: meeting.topics,
+    decisions: meeting.decisions || null,
+    agreements: meeting.agreements || null,
+    impediments: meeting.impediments || null,
+    notes: meeting.notes || null,
+    created_by: userId,
+    updated_by: userId
+  };
+
+  if (!isSupabaseConfigured || !supabase) {
+    const newMeet: ProjectMeeting = {
+      id: Math.random().toString(36).substr(2, 9),
+      project_id: meeting.project_id,
+      date_time: meeting.date_time,
+      type: meeting.type,
+      topics: meeting.topics,
+      decisions: meeting.decisions || '',
+      agreements: meeting.agreements || '',
+      impediments: meeting.impediments || '',
+      notes: meeting.notes || '',
+      attendees: ['Colaborador Asistente (Mock)']
+    };
+    mockMeetings.push(newMeet);
+    return newMeet;
+  }
+
+  try {
+    const { data: meetData, error: meetError } = await supabase!
+      .from('project_meetings')
+      .insert([payload])
+      .select('*, meeting_attendees(profile:profiles(first_name, last_name))')
+      .single();
+
+    if (meetError) throw meetError;
+
+    const meetingId = meetData.id;
+
+    if (attendeesProfileIds.length > 0) {
+      const attendeesPayload = attendeesProfileIds.map(pid => ({
+        meeting_id: meetingId,
+        profile_id: pid
+      }));
+
+      const { error: attError } = await supabase!
+        .from('meeting_attendees')
+        .insert(attendeesPayload);
+
+      if (attError) {
+        console.error('Error insertando asistentes de reunión:', attError);
+        throw attError;
+      }
+    }
+
+    const { data: finalData, error: finalError } = await supabase!
+      .from('project_meetings')
+      .select('*, meeting_attendees(profile:profiles(first_name, last_name))')
+      .eq('id', meetingId)
+      .single();
+
+    if (finalError) throw finalError;
+
+    return mapMeeting(finalData);
+  } catch (err: any) {
+    console.error('Error insertando reunión en Supabase:', err);
+    throw err;
+  }
+};
