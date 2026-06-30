@@ -7,7 +7,8 @@ import type {
   ProjectCommitment, 
   TimeLog, 
   ProjectRisk,
-  CommitmentStatus
+  CommitmentStatus,
+  RiskStatus
 } from '../types';
 import { 
   ArrowLeft, 
@@ -26,7 +27,8 @@ import { NewAdvanceModal } from './NewAdvanceModal';
 import { NewRiskModal } from './NewRiskModal';
 import { NewCommitmentModal } from './NewCommitmentModal';
 import { CommitmentStatusModal } from './CommitmentStatusModal';
-import { createProjectAdvance, createProjectRisk, createProjectCommitment, updateProjectCommitmentStatus } from '../services/projectsService';
+import { RiskStatusModal } from './RiskStatusModal';
+import { createProjectAdvance, createProjectRisk, createProjectCommitment, updateProjectCommitmentStatus, updateProjectRiskStatus } from '../services/projectsService';
 
 interface ProjectDetailProps {
   project: Project;
@@ -43,6 +45,7 @@ interface ProjectDetailProps {
   onAddRisk: (newRisk: ProjectRisk) => void;
   onAddCommitment: (newCommitment: ProjectCommitment) => void;
   onUpdateCommitment: (updatedCommitment: ProjectCommitment) => void;
+  onUpdateRisk: (updatedRisk: ProjectRisk) => void;
 }
 
 type TabType = 'resumen' | 'avances' | 'actividades' | 'reuniones' | 'compromisos' | 'tiempos' | 'riesgos' | 'reporte';
@@ -61,7 +64,8 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
   onAddAdvance,
   onAddRisk,
   onAddCommitment,
-  onUpdateCommitment
+  onUpdateCommitment,
+  onUpdateRisk
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('resumen');
   const [isAdvanceModalOpen, setIsAdvanceModalOpen] = useState(false);
@@ -151,6 +155,63 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
       onUpdateCommitment(updated);
       setPendingStatusChange(null);
     } catch (err: any) {
+      throw err;
+    }
+  };
+
+  const [isRiskStatusModalOpen, setIsRiskStatusModalOpen] = useState(false);
+  const [pendingRiskStatusChange, setPendingRiskStatusChange] = useState<{
+    risk: ProjectRisk;
+    newStatus: RiskStatus;
+  } | null>(null);
+
+  const handleRiskStatusChange = async (risk: ProjectRisk, newStatus: RiskStatus) => {
+    if (!userProfileId) {
+      alert('No se ha podido resolver tu identificador de perfil (profile_id) en el sistema. Actualización bloqueada.');
+      return;
+    }
+
+    if (risk.status === newStatus) return;
+
+    if (newStatus === 'Mitigado' || newStatus === 'Cerrado') {
+      setPendingRiskStatusChange({ risk, newStatus });
+      setIsRiskStatusModalOpen(true);
+      return;
+    }
+
+    // Cambio directo a 'Abierto' o 'En tratamiento'
+    const oldStatus = risk.status;
+    try {
+      const updated = await updateProjectRiskStatus(
+        String(risk.id),
+        newStatus,
+        risk.notes,
+        userProfileId
+      );
+      onUpdateRisk(updated);
+    } catch (err: any) {
+      alert(`Error al actualizar el estado del riesgo: ${err.message || err}`);
+      // Revertir el dropdown al estado anterior
+      onUpdateRisk({ ...risk, status: oldStatus });
+    }
+  };
+
+  const handleConfirmRiskStatusChange = async (finalNotes: string) => {
+    if (!pendingRiskStatusChange || !userProfileId) return;
+    const { risk, newStatus } = pendingRiskStatusChange;
+    const oldStatus = risk.status;
+    try {
+      const updated = await updateProjectRiskStatus(
+        String(risk.id),
+        newStatus,
+        finalNotes,
+        userProfileId
+      );
+      onUpdateRisk(updated);
+      setPendingRiskStatusChange(null);
+    } catch (err: any) {
+      // Revertir el dropdown al estado anterior
+      onUpdateRisk({ ...risk, status: oldStatus });
       throw err;
     }
   };
@@ -1075,13 +1136,24 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                           <p className="text-slate-600 leading-tight text-[11px]">{risk.mitigation_action}</p>
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap">
-                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${
-                            risk.status === 'Cerrado' || risk.status === 'Mitigado'
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                              : 'bg-amber-50 text-amber-700 border-amber-100'
-                          }`}>
-                            {risk.status}
-                          </span>
+                          <select
+                            value={risk.status}
+                            onChange={(e) => handleRiskStatusChange(risk, e.target.value as RiskStatus)}
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold border focus:outline-none focus:ring-1 focus:ring-sky-500 cursor-pointer ${
+                              risk.status === 'Cerrado'
+                                ? 'bg-sky-50 text-sky-700 border-sky-100'
+                                : risk.status === 'Mitigado'
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                  : risk.status === 'En tratamiento'
+                                    ? 'bg-amber-50 text-amber-700 border-amber-100'
+                                    : 'bg-red-50 text-red-700 border-red-100'
+                            }`}
+                          >
+                            <option value="Abierto">Abierto</option>
+                            <option value="En tratamiento">En tratamiento</option>
+                            <option value="Mitigado">Mitigado</option>
+                            <option value="Cerrado">Cerrado</option>
+                          </select>
                         </td>
                       </tr>
                     ))
@@ -1400,6 +1472,16 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
         onConfirm={handleConfirmStatusChange}
         status={pendingStatusChange?.newStatus || null}
         currentNotes={pendingStatusChange?.commitment.notes || ''}
+      />
+      <RiskStatusModal
+        isOpen={isRiskStatusModalOpen}
+        onClose={() => {
+          setIsRiskStatusModalOpen(false);
+          setPendingRiskStatusChange(null);
+        }}
+        onConfirm={handleConfirmRiskStatusChange}
+        status={pendingRiskStatusChange?.newStatus || null}
+        currentNotes={pendingRiskStatusChange?.risk.notes || ''}
       />
     </div>
   );
