@@ -17,7 +17,8 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 | **Fase 4D** | Pulido Visual y QA Responsivo | Completado | 4.0 | 3.5 | -0.5 | -12.5% |
 | **Fase 5A** | Formulario Guiado de Proyectos | Completado | 6.0 | 4.9 | -1.1 | -18.3% |
 | **Fase 5B** | Creación de Avances del Proyecto | Completado | 5.0 | 3.9 | -1.1 | -22.0% |
-| **Total** | **Gobernanza Completa del Proyecto** | **En Progreso**| **56.0** | **38.3** | -- | -- |
+| **Fase 5C** | Registro de Riesgos e Impedimentos | Completado | 5.0 | 4.0 | -1.0 | -20.0% |
+| **Total** | **Gobernanza Completa del Proyecto** | **En Progreso**| **61.0** | **42.3** | -- | -- |
 
 ---
 
@@ -149,4 +150,17 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 | Formulario de Nuevo Avance (Modal) | 2026-06-30 | A. Delgado / AI | 2.0 | 1.5 | Finalizado | Maquetación del componente modal controlado `NewAdvanceModal.tsx` con restricciones numéricas (0-100). |
 | Integración de API y Callbacks | 2026-06-30 | A. Delgado / AI | 1.5 | 1.2 | Finalizado | Vinculación del handler de inserción con la prop `onAddAdvance` y el `userProfileId` de auditoría. |
 | Compilación y Validación Final | 2026-06-30 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Ejecución de `npm run build` exitosa en 832ms para verificación de tipos. |
+
+---
+
+### Fase 5C: Registro de Riesgos e Impedimentos (Completado)
+* **Fecha de Inicio**: 2026-06-30
+* **Fecha de Fin**: 2026-06-30
+
+| Actividad / Tarea | Fecha | Responsable | Horas Estimadas | Horas Reales | Estado | Detalle / Entregables |
+| :--- | :--- | :--- | :---: | :---: | :---: | :--- |
+| Diagnóstico de Esquema y SQL RLS | 2026-06-30 | A. Delgado / AI | 1.0 | 0.8 | Finalizado | Inspección del esquema `project_risks` en schema.sql, confirmación de assignee_id y type, y creación del script RLS `5c_project_risks_rls.sql`. |
+| Formulario de Nuevo Riesgo (Modal) | 2026-06-30 | A. Delgado / AI | 2.0 | 1.6 | Finalizado | Maquetación del componente modal controlado `NewRiskModal.tsx` con dropdowns para tipo, impacto, probabilidad y estado conformes con los CHECK constraints. |
+| Integración de API y Callback en App | 2026-06-30 | A. Delgado / AI | 1.5 | 1.2 | Finalizado | Implementación del helper `createProjectRisk` y vinculación del callback `onAddRisk` para refresco reactivo del listado en el detalle. |
+| Compilación y Corrección Linter | 2026-06-30 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Ejecución exitosa de `npm run build` en 607ms solucionando advertencias de imports no utilizados. |
 
