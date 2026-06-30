@@ -69,6 +69,7 @@ export interface ProjectActivity {
   description: string;
   type: string;
   assignee: string;
+  assignee_id?: string;
   priority: ActivityPriority;
   kanban_status: KanbanStatus;
   start_date: string;
