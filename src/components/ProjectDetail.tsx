@@ -21,6 +21,9 @@ import {
 } from 'lucide-react';
 
 
+import { NewAdvanceModal } from './NewAdvanceModal';
+import { createProjectAdvance } from '../services/projectsService';
+
 interface ProjectDetailProps {
   project: Project;
   advances: ProjectAdvance[];
@@ -30,6 +33,9 @@ interface ProjectDetailProps {
   timeLogs: TimeLog[];
   risks: ProjectRisk[];
   onBack: () => void;
+  userProfileId: string | null;
+  adminName: string;
+  onAddAdvance: (newAdvance: ProjectAdvance) => void;
 }
 
 type TabType = 'resumen' | 'avances' | 'actividades' | 'reuniones' | 'compromisos' | 'tiempos' | 'riesgos' | 'reporte';
@@ -42,9 +48,26 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
   commitments,
   timeLogs,
   risks,
-  onBack
+  onBack,
+  userProfileId,
+  adminName,
+  onAddAdvance
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('resumen');
+  const [isAdvanceModalOpen, setIsAdvanceModalOpen] = useState(false);
+
+  const handleSaveAdvance = async (advanceData: Omit<ProjectAdvance, 'id' | 'reporter'>) => {
+    if (!userProfileId) {
+      throw new Error('No se ha podido resolver tu identificador de perfil (profile_id) en el sistema. Registro bloqueado.');
+    }
+    try {
+      const newAdv = await createProjectAdvance(advanceData, userProfileId);
+      onAddAdvance(newAdv);
+    } catch (err) {
+      console.error('Error registrando avance en el detalle:', err);
+      throw err;
+    }
+  };
 
   // Normalizar el ID del proyecto para textos condicionales del mock de la Fase 1
   const project = {
@@ -509,7 +532,18 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
         {/* 2. AVANCES TAB */}
         {activeTab === 'avances' && (
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-6">
-            <h3 className="font-bold text-slate-900 text-sm border-b border-slate-100 pb-2">Línea de Tiempo de Avances (Bitácora)</h3>
+            <div className="border-b border-slate-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">Línea de Tiempo de Avances (Bitácora)</h3>
+                <p className="text-[10px] text-slate-400 font-semibold uppercase">Historial de Reportes Ejecutivos</p>
+              </div>
+              <button
+                onClick={() => setIsAdvanceModalOpen(true)}
+                className="flex items-center justify-center gap-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-xs shrink-0 self-start sm:self-auto"
+              >
+                <TrendingUp className="w-4 h-4" /> Registrar Avance
+              </button>
+            </div>
             
             {projectAdvances.length > 0 ? (
               <div className="relative border-l border-slate-200 ml-4 pl-6 space-y-8">
@@ -1227,6 +1261,13 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
           </div>
         )}
       </div>
+      <NewAdvanceModal
+        isOpen={isAdvanceModalOpen}
+        onClose={() => setIsAdvanceModalOpen(false)}
+        onSave={handleSaveAdvance}
+        projectId={projectRaw.id}
+        adminName={adminName}
+      />
     </div>
   );
 };
