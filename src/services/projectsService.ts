@@ -80,6 +80,7 @@ const mapActivity = (dbAct: any): ProjectActivity => ({
   assignee: dbAct.assignee 
     ? `${dbAct.assignee.first_name} ${dbAct.assignee.last_name}` 
     : 'Sin asignar',
+  assignee_id: dbAct.assignee_id || '',
   priority: dbAct.priority,
   kanban_status: dbAct.kanban_status,
   start_date: dbAct.start_date || '',
@@ -661,6 +662,99 @@ export const updateProjectRiskStatus = async (
     return mapRisk(data);
   } catch (err: any) {
     console.error('Error actualizando riesgo en Supabase:', err);
+    throw err;
+  }
+};
+
+export const createProjectActivity = async (
+  activity: Omit<ProjectActivity, 'id' | 'assignee'>,
+  userId: string
+): Promise<ProjectActivity> => {
+  if (!userId) {
+    throw new Error('El identificador del perfil de usuario no está disponible. Registro bloqueado.');
+  }
+
+  const payload = {
+    project_id: activity.project_id,
+    name: activity.name,
+    description: activity.description,
+    priority: activity.priority,
+    kanban_status: 'Por hacer',
+    assignee_id: activity.assignee_id,
+    due_date: activity.due_date || null,
+    estimated_hours: activity.estimated_hours,
+    actual_hours: 0,
+    progress_pct: 0,
+    created_by: userId,
+    updated_by: userId
+  };
+
+  if (!isSupabaseConfigured || !supabase) {
+    const newAct: ProjectActivity = {
+      ...activity,
+      id: `mock-act-${Date.now()}`,
+      kanban_status: 'Por hacer',
+      actual_hours: 0,
+      progress_pct: 0,
+      assignee: 'Líder Asignado'
+    };
+    mockActivities.push(newAct);
+    return newAct;
+  }
+
+  try {
+    const { data, error } = await supabase!
+      .from('project_items')
+      .insert(payload)
+      .select('*, assignee:profiles!project_items_assignee_id_fkey(first_name, last_name)')
+      .single();
+
+    if (error) throw error;
+    return mapActivity(data);
+  } catch (err: any) {
+    console.error('Error insertando actividad en Supabase:', err);
+    throw err;
+  }
+};
+
+export const updateProjectActivityStatus = async (
+  activityId: string,
+  status: string,
+  userId: string
+): Promise<ProjectActivity> => {
+  if (!userId) {
+    throw new Error('El identificador del perfil de usuario no está disponible. Actualización bloqueada.');
+  }
+
+  const payload = {
+    kanban_status: status,
+    updated_by: userId
+  };
+
+  if (!isSupabaseConfigured || !supabase) {
+    const idx = mockActivities.findIndex(a => String(a.id) === String(activityId));
+    if (idx !== -1) {
+      mockActivities[idx] = {
+        ...mockActivities[idx],
+        kanban_status: status as any
+      };
+      return mockActivities[idx];
+    }
+    throw new Error('Actividad no encontrada en mockData.');
+  }
+
+  try {
+    const { data, error } = await supabase!
+      .from('project_items')
+      .update(payload)
+      .eq('id', activityId)
+      .select('*, assignee:profiles!project_items_assignee_id_fkey(first_name, last_name)')
+      .single();
+
+    if (error) throw error;
+    return mapActivity(data);
+  } catch (err: any) {
+    console.error('Error actualizando estado de actividad en Supabase:', err);
     throw err;
   }
 };
