@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'; // v1.2.1 - Trigger rebuild para Fase 6C
 import { 
   mockProjects, 
   mockAdvances, 
