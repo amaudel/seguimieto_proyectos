@@ -21,7 +21,8 @@ import {
   FolderGit2, 
   Users, 
   CheckCircle,
-  Layers
+  Layers,
+  Clock
 } from 'lucide-react';
 
 
@@ -29,9 +30,10 @@ import { NewAdvanceModal } from './NewAdvanceModal';
 import { NewRiskModal } from './NewRiskModal';
 import { NewCommitmentModal } from './NewCommitmentModal';
 import { NewActivityModal } from './NewActivityModal';
+import { NewTimeLogModal } from './NewTimeLogModal';
 import { CommitmentStatusModal } from './CommitmentStatusModal';
 import { RiskStatusModal } from './RiskStatusModal';
-import { createProjectAdvance, createProjectRisk, createProjectCommitment, createProjectActivity, updateProjectCommitmentStatus, updateProjectRiskStatus, updateProjectActivityStatus } from '../services/projectsService';
+import { createProjectAdvance, createProjectRisk, createProjectCommitment, createProjectActivity, createTimeLog, updateProjectCommitmentStatus, updateProjectRiskStatus, updateProjectActivityStatus } from '../services/projectsService';
 
 interface ProjectDetailProps {
   project: Project;
@@ -51,6 +53,7 @@ interface ProjectDetailProps {
   onUpdateRisk: (updatedRisk: ProjectRisk) => void;
   onAddActivity: (newActivity: ProjectActivity) => void;
   onUpdateActivity: (updatedActivity: ProjectActivity) => void;
+  onAddTimeLog: (newTimeLog: TimeLog) => void;
 }
 
 type TabType = 'resumen' | 'avances' | 'actividades' | 'reuniones' | 'compromisos' | 'tiempos' | 'riesgos' | 'reporte';
@@ -72,13 +75,15 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
   onUpdateCommitment,
   onUpdateRisk,
   onAddActivity,
-  onUpdateActivity
+  onUpdateActivity,
+  onAddTimeLog
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('resumen');
   const [isAdvanceModalOpen, setIsAdvanceModalOpen] = useState(false);
   const [isRiskModalOpen, setIsRiskModalOpen] = useState(false);
   const [isCommitmentModalOpen, setIsCommitmentModalOpen] = useState(false);
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
+  const [isTimeLogModalOpen, setIsTimeLogModalOpen] = useState(false);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [pendingStatusChange, setPendingStatusChange] = useState<{
     commitment: ProjectCommitment;
@@ -133,6 +138,19 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
       onAddActivity(newAct);
     } catch (err) {
       console.error('Error registrando actividad en el detalle:', err);
+      throw err;
+    }
+  };
+
+  const handleSaveTimeLog = async (logData: Omit<TimeLog, 'id' | 'user' | 'activity_name' | 'estimated_hours'>) => {
+    if (!userProfileId) {
+      throw new Error('No se ha podido resolver tu identificador de perfil (profile_id) en el sistema. Registro bloqueado.');
+    }
+    try {
+      const newLog = await createTimeLog(logData, userProfileId);
+      onAddTimeLog(newLog);
+    } catch (err) {
+      console.error('Error registrando log de tiempo en el detalle:', err);
       throw err;
     }
   };
@@ -1084,9 +1102,19 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
             {/* Time log table */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-              <div className="p-4 border-b border-slate-200 bg-slate-50">
-                <h3 className="font-bold text-slate-900 text-sm">Registro de Esfuerzo de Tiempos</h3>
-                <p className="text-[11px] text-slate-400">Resumen del trabajo incurrido por recurso.</p>
+              <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50">
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm">Registro de Esfuerzo de Tiempos</h3>
+                  <p className="text-[11px] text-slate-400">Resumen del trabajo incurrido por recurso.</p>
+                </div>
+                {userProfileId && (
+                  <button
+                    onClick={() => setIsTimeLogModalOpen(true)}
+                    className="flex items-center justify-center gap-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-xs shrink-0"
+                  >
+                    <Clock className="w-4 h-4" /> Registrar Tiempo
+                  </button>
+                )}
               </div>
 
               <div className="overflow-x-auto">
@@ -1551,6 +1579,13 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
         onSave={handleSaveActivity}
         projectId={projectRaw.id}
         adminName={adminName}
+      />
+      <NewTimeLogModal
+        isOpen={isTimeLogModalOpen}
+        onClose={() => setIsTimeLogModalOpen(false)}
+        onSave={handleSaveTimeLog}
+        projectId={projectRaw.id}
+        activities={activities}
       />
     </div>
   );
