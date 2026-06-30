@@ -364,6 +364,7 @@ function App() {
             onAddActivity={(newAct) => setActivities(prev => [...prev, newAct])}
             onUpdateActivity={(updated) => setActivities(prev => prev.map(a => String(a.id) === String(updated.id) ? updated : a))}
             onAddTimeLog={(newLog) => setTimeLogs(prev => [...prev, newLog])}
+            onAddMeeting={(newMeet) => setMeetings(prev => [...prev, newMeet])}
           />
         ) : view === 'detail' ? (
           <div className="text-center py-12">
