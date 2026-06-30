@@ -192,3 +192,16 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 | Integración de API y Callbacks | 2026-06-30 | A. Delgado / AI | 1.5 | 1.2 | Finalizado | Vinculación del dropdown select en la tabla con la función `updateProjectCommitmentStatus` e integración del callback `onUpdateCommitment`. |
 | Compilación y Validación Final | 2026-06-30 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Ejecución exitosa de `npm run build` en 640ms solucionando errores de tipo de variables en ProjectDetail.tsx. |
 
+---
+
+### Fase 6B: Actualización Controlada de Estado de Riesgos e Impedimentos (Completado)
+* **Fecha de Inicio**: 2026-06-30
+* **Fecha de Fin**: 2026-06-30
+
+| Actividad / Tarea | Fecha | Responsable | Horas Estimadas | Horas Reales | Estado | Detalle / Entregables |
+| :--- | :--- | :--- | :---: | :---: | :---: | :--- |
+| Diagnóstico de Esquema y SQL RLS | 2026-06-30 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Inspección del trigger de updated_at de la tabla `project_risks` y creación del script RLS `6b_project_risks_update_rls.sql`. |
+| Modal de Cambio de Estado (React) | 2026-06-30 | A. Delgado / AI | 1.5 | 1.2 | Finalizado | Maquetación del componente modal controlado `RiskStatusModal.tsx` con reglas opcionales/obligatorias de notas para Mitigado y Cerrado. |
+| Integración de API y Reversión UX | 2026-06-30 | A. Delgado / AI | 1.5 | 1.2 | Finalizado | Vinculación del dropdown select en la tabla con `updateProjectRiskStatus` con mecanismo de fallback de reversión si falla el API. |
+| Compilación y Validación Final | 2026-06-30 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Ejecución exitosa de `npm run build` en 443ms garantizando la robustez de los callbacks. |
+
