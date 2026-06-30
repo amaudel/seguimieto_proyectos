@@ -22,7 +22,8 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 | **Fase 6A** | Estado Controlado de Compromisos | Completado | 4.0 | 3.2 | -0.8 | -20.0% |
 | **Fase 6B** | Estado Controlado de Riesgos | Completado | 4.0 | 3.2 | -0.8 | -20.0% |
 | **Fase 6C** | Gestión de Actividades del Proyecto | Completado | 5.0 | 4.0 | -1.0 | -20.0% |
-| **Total** | **Gobernanza Completa del Proyecto** | **En Progreso**| **79.0** | **56.6** | -- | -- |
+| **Fase 6D** | Registro de Tiempos de Esfuerzo | Completado | 4.0 | 3.2 | -0.8 | -20.0% |
+| **Total** | **Gobernanza Completa del Proyecto** | **En Progreso**| **83.0** | **59.8** | -- | -- |
 
 ---
 
@@ -219,4 +220,17 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 | Formulario de Nueva Actividad (Modal) | 2026-06-30 | A. Delgado / AI | 2.0 | 1.6 | Finalizado | Maquetación del componente modal controlado `NewActivityModal.tsx` forzando la asignación obligatoria del responsable y validación de horas estimadas. |
 | Integración de API y Callbacks | 2026-06-30 | A. Delgado / AI | 2.0 | 1.6 | Finalizado | Implementación de createProjectActivity, updateProjectActivityStatus y vinculación con la UI y dropdown select interactivo con reversión en caso de error. |
 | Compilación y Validación Final | 2026-06-30 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Ejecución exitosa de `npm run build` en 696ms con cero errores en types.ts y componentes. |
+
+---
+
+### Fase 6D: Registro Controlado de Tiempos de Esfuerzo (Completado)
+* **Fecha de Inicio**: 2026-06-30
+* **Fecha de Fin**: 2026-06-30
+
+| Actividad / Tarea | Fecha | Responsable | Horas Estimadas | Horas Reales | Estado | Detalle / Entregables |
+| :--- | :--- | :--- | :---: | :---: | :---: | :--- |
+| Diagnóstico de Esquema y SQL RLS | 2026-06-30 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Diagnóstico físico de `time_logs` (actual_hours, user_id, type) y creación del script RLS `6d_time_logs_rls.sql`. |
+| Formulario de Registro de Tiempos | 2026-06-30 | A. Delgado / AI | 1.5 | 1.2 | Finalizado | Maquetación del componente modal controlled `NewTimeLogModal.tsx` con reglas estrictas de enteros mayores a cero, fecha no futura y actividad obligatoria. |
+| Integración de API y KPIs | 2026-06-30 | A. Delgado / AI | 1.5 | 1.2 | Finalizado | Creación del query helper `createTimeLog` en projectsService con mapeo relacional y callback `onAddTimeLog` para actualización en caliente. |
+| Compilación y Validación Final | 2026-06-30 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Ejecución exitosa de `npm run build` en 539ms garantizando la robustez de los tipos y vistas TSX. |
 
