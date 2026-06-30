@@ -619,3 +619,48 @@ export const updateProjectCommitmentStatus = async (
     throw err;
   }
 };
+
+export const updateProjectRiskStatus = async (
+  riskId: string,
+  status: string,
+  notes: string,
+  userId: string
+): Promise<ProjectRisk> => {
+  if (!userId) {
+    throw new Error('El identificador del perfil de usuario no está disponible. No se puede auditar la actualización del riesgo.');
+  }
+
+  const payload = {
+    status,
+    notes,
+    updated_by: userId
+  };
+
+  if (!isSupabaseConfigured || !supabase) {
+    const idx = mockRisks.findIndex(r => String(r.id) === String(riskId));
+    if (idx !== -1) {
+      mockRisks[idx] = {
+        ...mockRisks[idx],
+        status: status as any,
+        notes: notes
+      };
+      return mockRisks[idx];
+    }
+    throw new Error('Riesgo no encontrado en mockData.');
+  }
+
+  try {
+    const { data, error } = await supabase!
+      .from('project_risks')
+      .update(payload)
+      .eq('id', riskId)
+      .select('*, assignee:profiles!project_risks_assignee_id_fkey(first_name, last_name)')
+      .single();
+
+    if (error) throw error;
+    return mapRisk(data);
+  } catch (err: any) {
+    console.error('Error actualizando riesgo en Supabase:', err);
+    throw err;
+  }
+};
