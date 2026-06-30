@@ -6,7 +6,8 @@ import type {
   ProjectMeeting, 
   ProjectCommitment, 
   TimeLog, 
-  ProjectRisk 
+  ProjectRisk,
+  CommitmentStatus
 } from '../types';
 import { 
   ArrowLeft, 
@@ -24,7 +25,8 @@ import {
 import { NewAdvanceModal } from './NewAdvanceModal';
 import { NewRiskModal } from './NewRiskModal';
 import { NewCommitmentModal } from './NewCommitmentModal';
-import { createProjectAdvance, createProjectRisk, createProjectCommitment } from '../services/projectsService';
+import { CommitmentStatusModal } from './CommitmentStatusModal';
+import { createProjectAdvance, createProjectRisk, createProjectCommitment, updateProjectCommitmentStatus } from '../services/projectsService';
 
 interface ProjectDetailProps {
   project: Project;
@@ -40,6 +42,7 @@ interface ProjectDetailProps {
   onAddAdvance: (newAdvance: ProjectAdvance) => void;
   onAddRisk: (newRisk: ProjectRisk) => void;
   onAddCommitment: (newCommitment: ProjectCommitment) => void;
+  onUpdateCommitment: (updatedCommitment: ProjectCommitment) => void;
 }
 
 type TabType = 'resumen' | 'avances' | 'actividades' | 'reuniones' | 'compromisos' | 'tiempos' | 'riesgos' | 'reporte';
@@ -57,12 +60,18 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
   adminName,
   onAddAdvance,
   onAddRisk,
-  onAddCommitment
+  onAddCommitment,
+  onUpdateCommitment
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('resumen');
   const [isAdvanceModalOpen, setIsAdvanceModalOpen] = useState(false);
   const [isRiskModalOpen, setIsRiskModalOpen] = useState(false);
   const [isCommitmentModalOpen, setIsCommitmentModalOpen] = useState(false);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [pendingStatusChange, setPendingStatusChange] = useState<{
+    commitment: ProjectCommitment;
+    newStatus: CommitmentStatus;
+  } | null>(null);
 
   const handleSaveAdvance = async (advanceData: Omit<ProjectAdvance, 'id' | 'reporter'>) => {
     if (!userProfileId) {
@@ -99,6 +108,49 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
       onAddCommitment(newComm);
     } catch (err) {
       console.error('Error registrando compromiso en el detalle:', err);
+      throw err;
+    }
+  };
+
+  const handleStatusChange = async (commitment: ProjectCommitment, newStatus: CommitmentStatus) => {
+    if (!userProfileId) {
+      alert('No se ha podido resolver tu identificador de perfil (profile_id) en el sistema. Actualización bloqueada.');
+      return;
+    }
+
+    if (newStatus === 'Cumplido' || newStatus === 'Vencido') {
+      setPendingStatusChange({ commitment, newStatus });
+      setIsStatusModalOpen(true);
+      return;
+    }
+
+    // Actualización directa para 'Pendiente' o 'En proceso'
+    try {
+      const updated = await updateProjectCommitmentStatus(
+        String(commitment.id),
+        newStatus,
+        commitment.notes,
+        userProfileId
+      );
+      onUpdateCommitment(updated);
+    } catch (err: any) {
+      alert(`Error al actualizar el estado: ${err.message || err}`);
+    }
+  };
+
+  const handleConfirmStatusChange = async (finalNotes: string) => {
+    if (!pendingStatusChange || !userProfileId) return;
+    const { commitment, newStatus } = pendingStatusChange;
+    try {
+      const updated = await updateProjectCommitmentStatus(
+        String(commitment.id),
+        newStatus,
+        finalNotes,
+        userProfileId
+      );
+      onUpdateCommitment(updated);
+      setPendingStatusChange(null);
+    } catch (err: any) {
       throw err;
     }
   };
@@ -837,17 +889,24 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                           </span>
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap">
-                          <span className={`px-2 py-0.5 rounded text-[9px] font-bold border ${
-                            comp.status === 'Cumplido'
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                              : comp.status === 'En proceso'
-                                ? 'bg-amber-50 text-amber-700 border-amber-100'
-                                : comp.status === 'Vencido'
-                                  ? 'bg-red-50 text-red-700 border-red-100 animate-pulse'
-                                  : 'bg-slate-100 text-slate-600 border-slate-200'
-                          }`}>
-                            {comp.status}
-                          </span>
+                          <select
+                            value={comp.status}
+                            onChange={(e) => handleStatusChange(comp, e.target.value as CommitmentStatus)}
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold border focus:outline-none focus:ring-1 focus:ring-sky-500 cursor-pointer ${
+                              comp.status === 'Cumplido'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                : comp.status === 'En proceso'
+                                  ? 'bg-amber-50 text-amber-700 border-amber-100'
+                                  : comp.status === 'Vencido'
+                                    ? 'bg-red-50 text-red-700 border-red-100'
+                                    : 'bg-slate-100 text-slate-600 border-slate-200'
+                            }`}
+                          >
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="En proceso">En proceso</option>
+                            <option value="Cumplido">Cumplido</option>
+                            <option value="Vencido">Vencido</option>
+                          </select>
                         </td>
                         <td className="px-4 py-3.5 text-right whitespace-nowrap text-slate-400 max-w-xs truncate">
                           {comp.evidence ? (
@@ -1331,6 +1390,16 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
         onSave={handleSaveCommitment}
         projectId={projectRaw.id}
         adminName={adminName}
+      />
+      <CommitmentStatusModal
+        isOpen={isStatusModalOpen}
+        onClose={() => {
+          setIsStatusModalOpen(false);
+          setPendingStatusChange(null);
+        }}
+        onConfirm={handleConfirmStatusChange}
+        status={pendingStatusChange?.newStatus || null}
+        currentNotes={pendingStatusChange?.commitment.notes || ''}
       />
     </div>
   );
