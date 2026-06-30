@@ -361,6 +361,8 @@ function App() {
             onAddCommitment={(newComm) => setCommitments(prev => [...prev, newComm])}
             onUpdateCommitment={(updated) => setCommitments(prev => prev.map(c => String(c.id) === String(updated.id) ? updated : c))}
             onUpdateRisk={(updated) => setRisks(prev => prev.map(r => String(r.id) === String(updated.id) ? updated : r))}
+            onAddActivity={(newAct) => setActivities(prev => [...prev, newAct])}
+            onUpdateActivity={(updated) => setActivities(prev => prev.map(a => String(a.id) === String(updated.id) ? updated : a))}
           />
         ) : view === 'detail' ? (
           <div className="text-center py-12">
