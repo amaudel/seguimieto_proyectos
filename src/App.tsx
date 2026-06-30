@@ -357,6 +357,7 @@ function App() {
             userProfileId={userProfileId}
             adminName={session?.user?.email || 'Andrés Delgado'}
             onAddAdvance={(newAdv) => setAdvances(prev => [...prev, newAdv])}
+            onAddRisk={(newRisk) => setRisks(prev => [...prev, newRisk])}
           />
         ) : view === 'detail' ? (
           <div className="text-center py-12">
