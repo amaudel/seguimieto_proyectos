@@ -104,6 +104,7 @@ export interface ProjectCommitment {
   meeting_id: EntityId | null;
   description: string;
   assignee: string;
+  assignee_id?: string;
   due_date: string;
   status: CommitmentStatus;
   evidence: string;
