@@ -363,6 +363,7 @@ function App() {
             onUpdateRisk={(updated) => setRisks(prev => prev.map(r => String(r.id) === String(updated.id) ? updated : r))}
             onAddActivity={(newAct) => setActivities(prev => [...prev, newAct])}
             onUpdateActivity={(updated) => setActivities(prev => prev.map(a => String(a.id) === String(updated.id) ? updated : a))}
+            onAddTimeLog={(newLog) => setTimeLogs(prev => [...prev, newLog])}
           />
         ) : view === 'detail' ? (
           <div className="text-center py-12">
