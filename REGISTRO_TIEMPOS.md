@@ -19,7 +19,8 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 | **Fase 5B** | Creación de Avances del Proyecto | Completado | 5.0 | 3.9 | -1.1 | -22.0% |
 | **Fase 5C** | Registro de Riesgos e Impedimentos | Completado | 5.0 | 4.0 | -1.0 | -20.0% |
 | **Fase 5D** | Registro de Compromisos del Proyecto| Completado | 5.0 | 3.9 | -1.1 | -22.0% |
-| **Total** | **Gobernanza Completa del Proyecto** | **En Progreso**| **66.0** | **46.2** | -- | -- |
+| **Fase 6A** | Estado Controlado de Compromisos | Completado | 4.0 | 3.2 | -0.8 | -20.0% |
+| **Total** | **Gobernanza Completa del Proyecto** | **En Progreso**| **70.0** | **49.4** | -- | -- |
 
 ---
 
@@ -177,4 +178,17 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 | Formulario de Nuevo Compromiso (Modal) | 2026-06-30 | A. Delgado / AI | 2.0 | 1.5 | Finalizado | Maquetación del componente modal controlado `NewCommitmentModal.tsx` con dropdowns para responsables (Profiles), validación de fecha límite en el futuro y panel de auditoría. |
 | Integración de API y Callback en App | 2026-06-30 | A. Delgado / AI | 1.5 | 1.2 | Finalizado | Implementación del helper `createProjectCommitment` y vinculación del callback `onAddCommitment` para refresco reactivo del listado en el detalle. |
 | Compilación y Corrección Linter | 2026-06-30 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Ejecución exitosa de `npm run build` en 409ms solucionando advertencias de imports de lucide-react. |
+
+---
+
+### Fase 6A: Actualización Controlada de Estado de Compromisos (Completado)
+* **Fecha de Inicio**: 2026-06-30
+* **Fecha de Fin**: 2026-06-30
+
+| Actividad / Tarea | Fecha | Responsable | Horas Estimadas | Horas Reales | Estado | Detalle / Entregables |
+| :--- | :--- | :--- | :---: | :---: | :---: | :--- |
+| Diagnóstico de Esquema y SQL RLS | 2026-06-30 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Inspección del trigger de updated_at de la tabla `meeting_commitments` y creación del script RLS `6a_project_commitments_update_rls.sql`. |
+| Modal de Cambio de Estado (React) | 2026-06-30 | A. Delgado / AI | 1.5 | 1.2 | Finalizado | Maquetación del componente modal controlado `CommitmentStatusModal.tsx` con reglas opcionales/obligatorias de notas para Cumplido y Vencido. |
+| Integración de API y Callbacks | 2026-06-30 | A. Delgado / AI | 1.5 | 1.2 | Finalizado | Vinculación del dropdown select en la tabla con la función `updateProjectCommitmentStatus` e integración del callback `onUpdateCommitment`. |
+| Compilación y Validación Final | 2026-06-30 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Ejecución exitosa de `npm run build` en 640ms solucionando errores de tipo de variables en ProjectDetail.tsx. |
 
