@@ -119,6 +119,7 @@ const mapCommitment = (dbComm: any): ProjectCommitment => ({
   assignee: dbComm.assignee 
     ? `${dbComm.assignee.first_name} ${dbComm.assignee.last_name}` 
     : 'Sin asignar',
+  assignee_id: dbComm.assignee_id || undefined,
   due_date: dbComm.due_date,
   status: dbComm.status,
   evidence: dbComm.project_evidence?.[0]?.file_name || '',
@@ -525,6 +526,51 @@ export const createProjectRisk = async (
     return mapRisk(data);
   } catch (err: any) {
     console.error('Error insertando riesgo en Supabase:', err);
+    throw err;
+  }
+};
+
+export const createProjectCommitment = async (
+  commitment: Omit<ProjectCommitment, 'id' | 'assignee'>,
+  userId: string
+): Promise<ProjectCommitment> => {
+  if (!userId) {
+    throw new Error('El identificador del perfil de usuario no está disponible. No se puede auditar la creación del compromiso.');
+  }
+
+  const payload = {
+    project_id: commitment.project_id,
+    meeting_id: null,
+    description: commitment.description,
+    assignee_id: commitment.assignee_id || null,
+    due_date: commitment.due_date,
+    status: commitment.status,
+    notes: commitment.notes || null,
+    created_by: userId,
+    updated_by: userId
+  };
+
+  if (!isSupabaseConfigured || !supabase) {
+    const newComm: ProjectCommitment = {
+      ...commitment,
+      id: Math.random().toString(36).substr(2, 9),
+      assignee: 'Líder Asignado (Mock)'
+    };
+    mockCommitments.push(newComm);
+    return newComm;
+  }
+
+  try {
+    const { data, error } = await supabase!
+      .from('meeting_commitments')
+      .insert([payload])
+      .select('*, assignee:profiles!meeting_commitments_assignee_id_fkey(first_name, last_name)')
+      .single();
+
+    if (error) throw error;
+    return mapCommitment(data);
+  } catch (err: any) {
+    console.error('Error insertando compromiso en Supabase:', err);
     throw err;
   }
 };
