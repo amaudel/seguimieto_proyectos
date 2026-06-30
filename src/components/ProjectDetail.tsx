@@ -22,7 +22,8 @@ import {
   Users, 
   CheckCircle,
   Layers,
-  Clock
+  Clock,
+  Printer
 } from 'lucide-react';
 
 
@@ -318,15 +319,24 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
   const latestAdvance = projectAdvances.length > 0 
     ? projectAdvances.sort((a, b) => b.date.localeCompare(a.date))[0]
     : null;
-  const currentProgress = latestAdvance ? latestAdvance.progress_pct : 0;
+  // Reglas de cálculo Fase 7A
+  const currentProgress = latestAdvance 
+    ? latestAdvance.progress_pct 
+    : (projectActivities.length > 0 
+        ? Math.round((projectActivities.filter(a => a.kanban_status === 'Terminado').length / projectActivities.length) * 100)
+        : null);
 
   // Active blockages and high risks
-  const activeBlockagesCount = projectRisks.filter(r => r.status === 'Abierto' && r.type === 'Bloqueo').length;
-  const activeRisksCount = projectRisks.filter(r => r.status === 'Abierto' && r.type === 'Riesgo' && r.impact === 'Alto').length;
+  const activeRisksList = projectRisks.filter(r => r.status === 'Abierto' || r.status === 'En tratamiento');
+  const activeRisksCount = activeRisksList.filter(r => r.type === 'Riesgo').length;
+  const activeHighRisksCount = activeRisksList.filter(r => r.type === 'Riesgo' && r.impact === 'Alto').length;
+  const activeBlockagesCount = projectRisks.filter(r => 
+    (r.type === 'Bloqueo' || r.type === 'Impedimento') && r.status !== 'Mitigado' && r.status !== 'Cerrado'
+  ).length;
 
   // Time calculations
   const totalEstimatedHours = projectActivities.reduce((acc, a) => acc + a.estimated_hours, 0);
-  const totalActualHours = projectActivities.reduce((acc, a) => acc + a.actual_hours, 0);
+  const totalActualHours = projectTimeLogs.reduce((acc, log) => acc + log.actual_hours, 0);
   const hourDeviation = totalActualHours - totalEstimatedHours;
   const deviationPct = totalEstimatedHours > 0 ? Math.round((hourDeviation / totalEstimatedHours) * 100) : 0;
 
@@ -354,11 +364,21 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
   // Overdue counts
   const currentDateStr = '2026-06-25';
+  
+  const overdueCommitmentsList = projectCommitments.filter(c => 
+    c.status === 'Vencido' || (c.due_date < currentDateStr && c.status !== 'Cumplido')
+  );
+  const overdueCommitmentsCount = overdueCommitmentsList.length;
+
+  const currentDateObj = new Date(currentDateStr);
+  const nextSevenDaysDate = new Date(currentDateObj.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const nextSevenDaysStr = nextSevenDaysDate.toISOString().split('T')[0];
+  const upcomingCommitmentsCount = projectCommitments.filter(c => 
+    c.status !== 'Cumplido' && c.due_date >= currentDateStr && c.due_date <= nextSevenDaysStr
+  ).length;
+
   const overdueActivitiesCount = projectActivities.filter(a => 
     a.kanban_status !== 'Terminado' && a.due_date < currentDateStr
-  ).length;
-  const overdueCommitmentsCount = projectCommitments.filter(c => 
-    c.status === 'Vencido' || (c.status !== 'Cumplido' && c.due_date < currentDateStr)
   ).length;
 
   const tabs: { id: TabType; label: string }[] = [
@@ -1328,276 +1348,506 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
         )}
 
         {/* 8. REPORTE EJECUTIVO TAB */}
-        {activeTab === 'reporte' && (
-          <div className="bg-white p-6 sm:p-8 rounded-xl border border-slate-200 shadow-xs space-y-6 max-w-4xl mx-auto">
-            {/* Header Ficha */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-200 pb-4 gap-4">
-              <div>
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Documento de Control</span>
-                <h3 className="text-base font-extrabold text-slate-900">Ficha Ejecutiva BPMO / Sponsor / Comité</h3>
-                <p className="text-[11px] text-slate-500">Estado de control de proyectos - Cooperativa de Ahorro y Crédito</p>
-              </div>
-              <div className="text-left sm:text-right text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded border border-slate-200">
-                <div><strong>Fecha del Informe:</strong> 25 Jun 2026</div>
-                <div><strong>Emisor:</strong> Oficina de Procesos y Proyectos (BPMO)</div>
-              </div>
-            </div>
+        {activeTab === 'reporte' && (() => {
+          // Semáforo Esfuerzo
+          let esfuerzoColor = 'bg-slate-50 text-slate-700 border-slate-200';
+          let esfuerzoLabel = 'Sin línea base';
+          let esfuerzoDot = 'bg-slate-400';
+          if (totalEstimatedHours > 0) {
+            if (deviationPct <= 10) {
+              esfuerzoColor = 'bg-emerald-50 text-emerald-800 border-emerald-200';
+              esfuerzoLabel = 'En Orden (Desviación <= 10%)';
+              esfuerzoDot = 'bg-emerald-500';
+            } else if (deviationPct <= 20) {
+              esfuerzoColor = 'bg-amber-50 text-amber-800 border-amber-200';
+              esfuerzoLabel = 'Desviado (Desviación > 10% y <= 20%)';
+              esfuerzoDot = 'bg-amber-500';
+            } else {
+              esfuerzoColor = 'bg-red-50 text-red-800 border-red-200';
+              esfuerzoLabel = 'Desviación Crítica (Desviación > 20%)';
+              esfuerzoDot = 'bg-red-500';
+            }
+          }
 
-            {/* Block 1: Datos Generales */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-bold text-[#0284c7] uppercase tracking-wider border-b border-slate-100 pb-1">1. Datos Generales del Proyecto</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-2.5 text-xs">
-                <div>
-                  <span className="text-slate-400 block font-medium">Código del Proyecto:</span>
-                  <span className="font-semibold text-slate-800">{project.code}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block font-medium">Nombre de la Iniciativa:</span>
-                  <span className="font-semibold text-slate-800">{project.name}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block font-medium">Líder del Proyecto:</span>
-                  <span className="font-semibold text-slate-800">{project.leader_name}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block font-medium">Patrocinador Ejecutor (Sponsor):</span>
-                  <span className="font-semibold text-slate-800">{project.sponsor}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block font-medium">Responsable Funcional / Ejecutor:</span>
-                  <span className="font-semibold text-slate-800">{project.responsible_func} / {project.responsible_exec}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block font-medium">Fechas Planificadas (Inicio / Fin):</span>
-                  <span className="font-semibold text-slate-800">{project.start_date} al {project.end_date}</span>
-                </div>
-              </div>
-            </div>
+          // Semáforo Alcance
+          let alcanceColor = 'bg-emerald-50 text-emerald-800 border-emerald-200';
+          let alcanceLabel = 'Alineado (Sin alertas críticas)';
+          let alcanceDot = 'bg-emerald-500';
+          if (activeBlockagesCount > 0 || activeHighRisksCount > 0) {
+            alcanceColor = 'bg-red-50 text-red-800 border-red-200';
+            alcanceLabel = 'En Riesgo (Bloqueos o riesgos altos activos)';
+            alcanceDot = 'bg-red-500';
+          } else if (activeRisksList.some(r => r.type === 'Riesgo' && r.impact === 'Medio')) {
+            alcanceColor = 'bg-amber-50 text-amber-800 border-amber-200';
+            alcanceLabel = 'Riesgo Medio (Existen riesgos activos medios)';
+            alcanceDot = 'bg-amber-500';
+          }
 
-            {/* Block 2 & 3: Estado de Salud y Avance Actual */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-              
-              {/* Salud de 3 dimensiones */}
-              <div className="md:col-span-2 space-y-2">
-                <h4 className="text-xs font-bold text-[#0284c7] uppercase tracking-wider border-b border-slate-100 pb-1">2. Semáforo de Salud del Proyecto</h4>
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div className="p-2 rounded border border-slate-150 bg-slate-50/50">
-                    <span className="text-[9px] text-slate-400 uppercase font-bold block">Tiempos</span>
-                    <span className={`inline-block w-2.5 h-2.5 rounded-full mt-1.5 ${
-                      project.id === 4 ? 'bg-red-500' : project.id === 2 ? 'bg-amber-500' : 'bg-emerald-500'
-                    }`} />
-                    <span className="text-[10px] block font-semibold text-slate-700 mt-1">
-                      {project.id === 4 ? 'Retraso Crítico' : project.id === 2 ? 'En Alerta' : 'Al Día'}
-                    </span>
+          // Semáforo Tiempos
+          let tiemposColor = 'bg-emerald-50 text-emerald-800 border-emerald-200';
+          let tiemposLabel = 'Al Día (Sin compromisos vencidos)';
+          let tiemposDot = 'bg-emerald-500';
+          if (overdueCommitmentsCount > 0) {
+            tiemposColor = 'bg-red-50 text-red-800 border-red-200';
+            tiemposLabel = 'Retrasado (Existen compromisos vencidos)';
+            tiemposDot = 'bg-red-500';
+          } else if (upcomingCommitmentsCount > 0) {
+            tiemposColor = 'bg-amber-50 text-amber-800 border-amber-200';
+            tiemposLabel = 'En Alerta (Compromisos próximos a vencer)';
+            tiemposDot = 'bg-amber-500';
+          }
+
+          // Conclusión BPMO
+          let conclusionBPMO = 'PROYECTO ESTABLE: El proyecto se ejecuta en base al alcance, tiempos y presupuesto acordados.';
+          let conclusionColor = 'bg-emerald-50 border-emerald-200 text-emerald-950';
+          if (alcanceDot === 'bg-red-500' || tiemposDot === 'bg-red-500' || esfuerzoDot === 'bg-red-500') {
+            conclusionBPMO = 'PROYECTO CRÍTICO: Se requiere intervención urgente de los Sponsors y Gerencia para resolver bloqueos y desvíos.';
+            conclusionColor = 'bg-red-50 border-red-200 text-red-950';
+          } else if (alcanceDot === 'bg-amber-500' || tiemposDot === 'bg-amber-500' || esfuerzoDot === 'bg-amber-500') {
+            conclusionBPMO = 'PROYECTO CON ALERTAS: Monitoreo preventivo activo. Desviaciones menores bajo tratamiento.';
+            conclusionColor = 'bg-amber-50 border-amber-200 text-amber-950';
+          }
+
+          // Fechas formateadas
+          const formattedCurrentDate = new Date(currentDateStr).toLocaleDateString('es-ES', { dateStyle: 'long' });
+
+          return (
+            <div className="space-y-6 max-w-4xl mx-auto text-left">
+              {/* CSS inline acotado para impresión */}
+              <style>{`
+                @media print {
+                  body * {
+                    visibility: hidden;
+                  }
+                  .executive-report-container, .executive-report-container * {
+                    visibility: visible;
+                  }
+                  .executive-report-container {
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    border: none !important;
+                    box-shadow: none !important;
+                    background: white !important;
+                  }
+                  .no-print {
+                    display: none !important;
+                  }
+                  .print-avoid-break {
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
+                  }
+                }
+              `}</style>
+
+              {/* Botón Imprimir (No se imprime) */}
+              <div className="flex justify-end no-print">
+                <button
+                  onClick={() => window.print()}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
+                >
+                  <Printer className="w-4 h-4" /> Imprimir / Guardar como PDF
+                </button>
+              </div>
+
+              {/* Contenedor Principal del Reporte */}
+              <div className="executive-report-container bg-white p-6 sm:p-8 rounded-xl border border-slate-200 shadow-xs space-y-6">
+                
+                {/* 1. Encabezado */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-200 pb-4 gap-4">
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Sistema de Seguimiento de Proyectos</span>
+                    <h3 className="text-base font-extrabold text-slate-900 uppercase">Reporte Ejecutivo Consolidado de Proyecto</h3>
+                    <p className="text-[11px] text-slate-500 font-medium">{project.name} ({project.code})</p>
                   </div>
-                  <div className="p-2 rounded border border-slate-150 bg-slate-50/50">
-                    <span className="text-[9px] text-slate-400 uppercase font-bold block">Alcance</span>
-                    <span className={`inline-block w-2.5 h-2.5 rounded-full mt-1.5 ${
-                      project.id === 4 ? 'bg-amber-500' : 'bg-emerald-500'
-                    }`} />
-                    <span className="text-[10px] block font-semibold text-slate-700 mt-1">
-                      {project.id === 4 ? 'Riesgo' : 'Alineado'}
-                    </span>
-                  </div>
-                  <div className="p-2 rounded border border-slate-150 bg-slate-50/50">
-                    <span className="text-[9px] text-slate-400 uppercase font-bold block">Esfuerzo</span>
-                    <span className={`inline-block w-2.5 h-2.5 rounded-full mt-1.5 ${
-                      project.id === 1 || project.id === 4 ? 'bg-amber-500' : 'bg-emerald-500'
-                    }`} />
-                    <span className="text-[10px] block font-semibold text-slate-700 mt-1">
-                      {project.id === 1 || project.id === 4 ? 'Desviado' : 'En Orden'}
-                    </span>
+                  <div className="text-left sm:text-right text-[10px] text-slate-500 bg-slate-50 p-2.5 rounded border border-slate-200">
+                    <div><strong>Fecha de Generación:</strong> {formattedCurrentDate}</div>
+                    <div><strong>Emisor:</strong> Oficina de Proyectos (BPMO)</div>
                   </div>
                 </div>
-              </div>
 
-              {/* Avance actual */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold text-[#0284c7] uppercase tracking-wider border-b border-slate-100 pb-1">3. Avance Actual</h4>
-                <div className="p-3.5 bg-slate-50 rounded border border-slate-150 flex flex-col justify-center items-center h-[72px]">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black text-slate-800">{currentProgress}%</span>
-                    <span className="text-[9px] text-slate-400 uppercase font-semibold">Completado</span>
-                  </div>
-                  <div className="w-full bg-slate-200 rounded-full h-1.5 mt-2">
-                    <div 
-                      className={`h-1.5 rounded-full ${project.status === 'Con retraso' ? 'bg-red-500' : 'bg-[#0284c7]'}`}
-                      style={{ width: `${currentProgress}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-            {/* Block 4 & 5: Hitos logrados y Pendientes relevantes */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 text-xs">
-              
-              {/* Hitos Logrados */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold text-[#0284c7] uppercase tracking-wider border-b border-slate-100 pb-1">4. Hitos y Avances Logrados</h4>
-                {projectAdvances.length > 0 ? (
-                  <ul className="space-y-2 list-none">
-                    {projectAdvances.slice(0, 2).map(adv => (
-                      <li key={adv.id} className="bg-slate-50 p-2.5 rounded border border-slate-100">
-                        <div className="flex justify-between font-bold text-[10px] text-slate-400 mb-0.5">
-                          <span>{adv.date}</span>
-                          <span className="text-emerald-600 font-extrabold">{adv.progress_pct}%</span>
-                        </div>
-                        <p className="text-slate-800 font-semibold">{adv.summary}</p>
-                        <p className="text-[10px] text-slate-500 mt-1"><strong>Entregado:</strong> {adv.value_delivered}</p>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-slate-400 italic">No hay avances registrados.</p>
-                )}
-              </div>
-
-              {/* Pendientes Relevantes */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold text-[#0284c7] uppercase tracking-wider border-b border-slate-100 pb-1">5. Actividades Pendientes Relevantes</h4>
-                <div className="space-y-1.5">
-                  {projectActivities.filter(a => a.kanban_status !== 'Terminado').length > 0 ? (
-                    projectActivities.filter(a => a.kanban_status !== 'Terminado').slice(0, 3).map(act => (
-                      <div key={act.id} className="flex justify-between items-start p-2 bg-slate-50 rounded border border-slate-100">
-                        <div>
-                          <p className="font-semibold text-slate-850 line-clamp-1">{act.name}</p>
-                          <p className="text-[10px] text-slate-400">Responsable: {act.assignee}</p>
-                        </div>
-                        <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${
-                          act.kanban_status === 'Bloqueado' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-slate-100 text-slate-600 border border-slate-200'
-                        }`}>{act.kanban_status}</span>
+                {/* Grid principal: Datos Generales e Indicadores de Salud */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Datos Generales */}
+                  <div className="md:col-span-2 space-y-3">
+                    <h4 className="text-xs font-bold text-sky-700 uppercase tracking-wider border-b border-slate-100 pb-1">
+                      Datos Generales
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <span className="text-slate-400 block font-medium">Líder del Proyecto:</span>
+                        <span className="font-semibold text-slate-800">{project.leader_name}</span>
                       </div>
-                    ))
-                  ) : (
-                    <p className="text-slate-400 italic">No hay actividades pendientes en curso.</p>
-                  )}
-                </div>
-              </div>
-
-            </div>
-
-            {/* Block 6 & 7: Compromisos vencidos y Riesgos/Bloqueos */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 text-xs">
-              
-              {/* Compromisos Vencidos */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold text-[#0284c7] uppercase tracking-wider border-b border-slate-100 pb-1">6. Compromisos Vencidos</h4>
-                <div className="space-y-1.5">
-                  {projectCommitments.filter(c => c.status === 'Vencido').length > 0 ? (
-                    projectCommitments.filter(c => c.status === 'Vencido').map(comp => (
-                      <div key={comp.id} className="p-2.5 bg-red-50 border border-red-150 rounded text-red-950 flex justify-between items-start gap-2">
-                        <div>
-                          <p className="font-semibold leading-tight">{comp.description}</p>
-                          <span className="text-[10px] text-red-700 font-medium">Asignado a: {comp.assignee}</span>
-                        </div>
-                        <span className="text-[9px] font-bold bg-red-100 text-red-700 px-1.5 py-0.5 rounded shrink-0">
-                          Límite: {comp.due_date}
-                        </span>
+                      <div>
+                        <span className="text-slate-400 block font-medium">Sponsor de Iniciativa:</span>
+                        <span className="font-semibold text-slate-800">{project.sponsor || 'Sin sponsor'}</span>
                       </div>
-                    ))
-                  ) : (
-                    <div className="p-2.5 bg-emerald-50 border border-emerald-150 rounded text-emerald-900 flex items-center gap-1.5 font-semibold">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                      <span>Sin compromisos vencidos. Todos los acuerdos se encuentran al día.</span>
+                      <div>
+                        <span className="text-slate-400 block font-medium">Área Ejecutora:</span>
+                        <span className="font-semibold text-slate-800">{project.responsible_func || 'BPMO'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block font-medium">Fechas Planificadas:</span>
+                        <span className="font-semibold text-slate-800">{project.start_date} al {project.end_date}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block font-medium">Estado del Proyecto:</span>
+                        <span className="font-bold text-slate-800 uppercase text-[10px]">{project.status}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block font-medium">Prioridad BPMO:</span>
+                        <span className="font-bold text-slate-800 uppercase text-[10px]">{project.priority}</span>
+                      </div>
                     </div>
-                  )}
-                </div>
-              </div>
+                  </div>
 
-              {/* Riesgos y Bloqueos */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold text-[#0284c7] uppercase tracking-wider border-b border-slate-100 pb-1">7. Riesgos y Bloqueos Activos</h4>
-                <div className="space-y-1.5">
-                  {projectRisks.filter(r => r.status === 'Abierto').length > 0 ? (
-                    projectRisks.filter(r => r.status === 'Abierto').map(risk => (
-                      <div key={risk.id} className={`p-2.5 rounded border flex justify-between items-start gap-2 ${
-                        risk.type === 'Bloqueo' ? 'bg-red-50 border-red-150 text-red-950' : 'bg-amber-50 border-amber-150 text-amber-950'
-                      }`}>
-                        <div>
-                          <p className="font-semibold leading-tight">[{risk.type}] {risk.description}</p>
-                          <span className="text-[10px] opacity-80">Mitigación: {risk.mitigation_action}</span>
+                  {/* Semáforos de Salud */}
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-sky-700 uppercase tracking-wider border-b border-slate-100 pb-1">
+                      Salud General (Semáforos)
+                    </h4>
+                    <div className="space-y-2 text-xs">
+                      {/* Tiempos */}
+                      <div className={`p-2 rounded border flex items-center justify-between gap-2 ${tiemposColor}`}>
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2.5 h-2.5 rounded-full ${tiemposDot}`} />
+                          <span className="font-semibold">Tiempos:</span>
                         </div>
-                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
-                          risk.type === 'Bloqueo' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
-                        }`}>
-                          {risk.impact}
-                        </span>
+                        <span className="font-bold text-[10px] uppercase">{tiemposLabel.split(' ')[0]}</span>
                       </div>
-                    ))
-                  ) : (
-                    <div className="p-2.5 bg-slate-50 border border-slate-150 rounded text-slate-500 italic">
-                      No se registran riesgos ni bloqueos activos.
+                      {/* Alcance */}
+                      <div className={`p-2 rounded border flex items-center justify-between gap-2 ${alcanceColor}`}>
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2.5 h-2.5 rounded-full ${alcanceDot}`} />
+                          <span className="font-semibold">Alcance:</span>
+                        </div>
+                        <span className="font-bold text-[10px] uppercase">{alcanceLabel.split(' ')[0]}</span>
+                      </div>
+                      {/* Esfuerzo */}
+                      <div className={`p-2 rounded border flex items-center justify-between gap-2 ${esfuerzoColor}`}>
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2.5 h-2.5 rounded-full ${esfuerzoDot}`} />
+                          <span className="font-semibold">Esfuerzo:</span>
+                        </div>
+                        <span className="font-bold text-[10px] uppercase">{esfuerzoLabel.split(' ')[0]}</span>
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
-              </div>
 
-            </div>
-
-            {/* Block 8, 9 & 10: Horas, Próximos pasos y Decisiones requeridas */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2 text-xs">
-              
-              {/* Horas planificadas vs reales */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold text-[#0284c7] uppercase tracking-wider border-b border-slate-100 pb-1">8. Control de Esfuerzo (Horas)</h4>
-                <div className="p-3 bg-slate-50 border border-slate-150 rounded text-slate-700 space-y-2">
-                  <div className="flex justify-between items-center text-[11px]">
-                    <span>Estimado Planificado:</span>
-                    <span className="font-bold">{totalEstimatedHours}h</span>
+                {/* KPIs Clave */}
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 grid grid-cols-2 sm:grid-cols-5 gap-4 text-center">
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Avance Real</span>
+                    <span className="text-xl font-extrabold text-slate-800">
+                      {currentProgress !== null ? `${currentProgress}%` : 'Sin info'}
+                    </span>
                   </div>
-                  <div className="flex justify-between items-center text-[11px]">
-                    <span>Consumido Incurrido:</span>
-                    <span className="font-bold">{totalActualHours}h</span>
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Actividades Termitadas</span>
+                    <span className="text-xl font-extrabold text-slate-800">
+                      {projectActivities.filter(a => a.kanban_status === 'Terminado').length} / {projectActivities.length}
+                    </span>
                   </div>
-                  <div className="flex justify-between items-center text-[11px] pt-1.5 border-t border-slate-200">
-                    <span>Desviación Total:</span>
-                    <span className={`font-black ${hourDeviation > 0 ? 'text-red-600' : 'text-emerald-700'}`}>
-                      {hourDeviation > 0 ? `+${hourDeviation}h (+${deviationPct}%)` : `${hourDeviation}h (${deviationPct}%)`}
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Riesgos / Bloqueos</span>
+                    <span className="text-xl font-extrabold text-slate-800">
+                      {activeRisksCount} / {activeBlockagesCount}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Compromisos Pend.</span>
+                    <span className="text-xl font-extrabold text-slate-800">
+                      {projectCommitments.filter(c => c.status !== 'Cumplido').length}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Desviación Horas</span>
+                    <span className={`text-xl font-extrabold ${hourDeviation > 0 ? 'text-red-600' : 'text-emerald-700'}`}>
+                      {totalEstimatedHours > 0 ? `${hourDeviation > 0 ? `+${deviationPct}%` : `${deviationPct}%`}` : 'Sin base'}
                     </span>
                   </div>
                 </div>
-              </div>
 
-              {/* Próximos pasos */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold text-[#0284c7] uppercase tracking-wider border-b border-slate-100 pb-1">9. Próximos Pasos</h4>
-                <div className="p-3 bg-slate-50 border border-slate-150 rounded text-slate-700 h-[86px] overflow-y-auto">
-                  <p className="italic leading-relaxed">
-                    {latestAdvance ? latestAdvance.next_steps : 'No se registran próximos pasos.'}
+                {/* Caso de Negocio */}
+                <div className="space-y-2 print-avoid-break">
+                  <h4 className="text-xs font-bold text-sky-700 uppercase tracking-wider border-b border-slate-100 pb-1">
+                    Justificación y Caso de Negocio
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                      <strong className="text-slate-600 block mb-1">Problema u Oportunidad:</strong>
+                      <p className="text-slate-700 italic">
+                        {project.id === 1 && "Centralizar la validación crediticia para reducir tiempos de aprobación de 48 horas a 10 minutos."}
+                        {project.id === 2 && "Habilitar transferencias en tiempo real (SPI) y biometría para cumplir normativas del BCE y mitigar fraudes de suplantación."}
+                        {project.id === 3 && "Establecer la estructura de control, gobernanza y metodologías de proyectos de la cooperativa."}
+                        {project.id === 4 && "Automatizar el proceso de solicitudes de tarjetas de crédito y scoring en línea para competir en el mercado digital."}
+                        {!['1', '2', '3', '4'].includes(String(project.id)) && "No se registra justificación estructurada en base de datos."}
+                      </p>
+                    </div>
+                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                      <strong className="text-slate-600 block mb-1">Beneficios Esperados:</strong>
+                      <p className="text-slate-700 italic">
+                        {project.id === 1 && "Reducción del costo operativo de riesgo en un 15%, y desembolsos automatizados."}
+                        {project.id === 2 && "Reducción del 99% de suplantaciones en ventanilla y transaccionalidad inmediata interbancaria."}
+                        {project.id === 3 && "Estandarización metodológica al 100%, visibilidad de KPIs en caliente y trazabilidad auditada."}
+                        {project.id === 4 && "Incremento del 30% en colocación de tarjetas de crédito en el primer trimestre."}
+                        {!['1', '2', '3', '4'].includes(String(project.id)) && "Optimización de procesos institucionales."}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Último Avance y Conclusión Ejecutiva */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 print-avoid-break">
+                  {/* Resumen Ejecutivo Avance */}
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-bold text-sky-700 uppercase tracking-wider border-b border-slate-100 pb-1">
+                      Último Avance Registrado
+                    </h4>
+                    {latestAdvance ? (
+                      <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-100 text-xs space-y-2">
+                        <div className="flex justify-between font-bold text-[10px] text-slate-400">
+                          <span>Fecha: {latestAdvance.date}</span>
+                          <span className="text-emerald-600">Progreso: {latestAdvance.progress_pct}%</span>
+                        </div>
+                        <p className="font-semibold text-slate-800">{latestAdvance.summary}</p>
+                        <p className="text-slate-600"><strong>Valor Entregado:</strong> {latestAdvance.value_delivered}</p>
+                        <p className="text-slate-600"><strong>Próximos Pasos:</strong> {latestAdvance.next_steps}</p>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-400 italic bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        No hay registros de avances cargados.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Conclusión Ejecutiva BPMO */}
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-bold text-sky-700 uppercase tracking-wider border-b border-slate-100 pb-1">
+                      Conclusión y Dictamen BPMO
+                    </h4>
+                    <div className={`p-4 rounded-xl border text-xs font-medium space-y-2 leading-relaxed ${conclusionColor}`}>
+                      <p className="font-bold uppercase tracking-wider text-[10px]">{conclusionBPMO.split(':')[0]}:</p>
+                      <p>{conclusionBPMO.split(':').slice(1).join(':')}</p>
+                      <div className="text-[10px] text-slate-500 pt-2 border-t border-slate-200/50">
+                        {project.id === 1 && "Monitoreo estable de la fase de despliegue y pilotaje crediticio en ventanillas."}
+                        {project.id === 2 && "Alerta activa por VPN SPI BCE. Seguimiento en mesa técnica directiva."}
+                        {project.id === 3 && "Gobernanza aprobada. Inicio de parametrización de metodologías."}
+                        {project.id === 4 && "Escalamiento directivo urgente por Buró y firma OTP."}
+                        {!['1', '2', '3', '4'].includes(String(project.id)) && "Seguimiento periódico de cumplimiento de compromisos y actividades."}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Detalle de Actividades por Estado */}
+                <div className="space-y-2 print-avoid-break">
+                  <h4 className="text-xs font-bold text-sky-700 uppercase tracking-wider border-b border-slate-100 pb-1">
+                    Gestión del Backlog (Actividades)
+                  </h4>
+                  <div className="grid grid-cols-5 gap-2 text-center text-xs mb-3">
+                    <div className="bg-slate-50 p-2 rounded border border-slate-100">
+                      <span className="text-[9px] text-slate-400 block uppercase font-bold">Por Hacer</span>
+                      <span className="font-bold text-slate-800">{projectActivities.filter(a => a.kanban_status === 'Por hacer').length}</span>
+                    </div>
+                    <div className="bg-sky-50 p-2 rounded border border-sky-100">
+                      <span className="text-[9px] text-sky-400 block uppercase font-bold">En Progreso</span>
+                      <span className="font-bold text-sky-800">{projectActivities.filter(a => a.kanban_status === 'En progreso').length}</span>
+                    </div>
+                    <div className="bg-red-50 p-2 rounded border border-red-100">
+                      <span className="text-[9px] text-red-400 block uppercase font-bold">Bloqueado</span>
+                      <span className="font-bold text-red-800">{projectActivities.filter(a => a.kanban_status === 'Bloqueado').length}</span>
+                    </div>
+                    <div className="bg-amber-50 p-2 rounded border border-amber-100">
+                      <span className="text-[9px] text-amber-400 block uppercase font-bold">Revisión</span>
+                      <span className="font-bold text-amber-800">{projectActivities.filter(a => a.kanban_status === 'En revisión').length}</span>
+                    </div>
+                    <div className="bg-emerald-50 p-2 rounded border border-emerald-100">
+                      <span className="text-[9px] text-emerald-400 block uppercase font-bold">Terminado</span>
+                      <span className="font-bold text-emerald-800">{projectActivities.filter(a => a.kanban_status === 'Terminado').length}</span>
+                    </div>
+                  </div>
+
+                  {/* Actividades Críticas / Bloqueadas */}
+                  {projectActivities.filter(a => a.kanban_status === 'Bloqueado' || a.priority === 'Crítica').length > 0 ? (
+                    <div className="overflow-hidden border border-slate-150 rounded-lg">
+                      <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
+                        <thead className="bg-slate-50 text-[10px] font-bold text-slate-500 uppercase">
+                          <tr>
+                            <th className="px-3 py-2">Actividad Crítica / Bloqueada</th>
+                            <th className="px-3 py-2">Responsable</th>
+                            <th className="px-3 py-2">Estado</th>
+                            <th className="px-3 py-2">Fecha Límite</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-slate-700 bg-white">
+                          {projectActivities.filter(a => a.kanban_status === 'Bloqueado' || a.priority === 'Crítica').map(act => (
+                            <tr key={act.id}>
+                              <td className="px-3 py-2 font-semibold text-slate-800">{act.name}</td>
+                              <td className="px-3 py-2">{act.assignee}</td>
+                              <td className="px-3 py-2">
+                                <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                                  act.kanban_status === 'Bloqueado' ? 'bg-red-50 text-red-700' : 'bg-slate-100 text-slate-600'
+                                }`}>{act.kanban_status}</span>
+                              </td>
+                              <td className="px-3 py-2">{act.due_date}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400 italic">No se reportan actividades críticas en desvío.</p>
+                  )}
+                </div>
+
+                {/* Riesgos y Bloqueos */}
+                <div className="space-y-2 print-avoid-break">
+                  <h4 className="text-xs font-bold text-sky-700 uppercase tracking-wider border-b border-slate-100 pb-1">
+                    Matriz de Riesgos y Alertas Activas
+                  </h4>
+                  {activeRisksList.length > 0 ? (
+                    <div className="overflow-hidden border border-slate-150 rounded-lg">
+                      <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
+                        <thead className="bg-slate-50 text-[10px] font-bold text-slate-500 uppercase">
+                          <tr>
+                            <th className="px-3 py-2">Tipo</th>
+                            <th className="px-3 py-2">Descripción del Riesgo</th>
+                            <th className="px-3 py-2">Impacto</th>
+                            <th className="px-3 py-2">Plan de Mitigación</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-slate-700 bg-white">
+                          {activeRisksList.map(risk => (
+                            <tr key={risk.id}>
+                              <td className="px-3 py-2 font-bold">
+                                <span className={`px-1.5 py-0.5 rounded text-[8px] ${
+                                  risk.type === 'Bloqueo' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
+                                }`}>
+                                  {risk.type}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2 font-medium text-slate-800">{risk.description}</td>
+                              <td className="px-3 py-2">
+                                <span className={`font-semibold ${risk.impact === 'Alto' ? 'text-red-600' : 'text-slate-650'}`}>{risk.impact}</span>
+                              </td>
+                              <td className="px-3 py-2 text-slate-600">{risk.mitigation_action || 'En tratamiento'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400 italic">No se reportan riesgos ni bloqueos activos.</p>
+                  )}
+                </div>
+
+                {/* Compromisos */}
+                <div className="space-y-2 print-avoid-break">
+                  <h4 className="text-xs font-bold text-sky-700 uppercase tracking-wider border-b border-slate-100 pb-1">
+                    Compromisos y Acuerdos de Gestión
+                  </h4>
+                  {projectCommitments.length > 0 ? (
+                    <div className="overflow-hidden border border-slate-150 rounded-lg">
+                      <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
+                        <thead className="bg-slate-50 text-[10px] font-bold text-slate-500 uppercase">
+                          <tr>
+                            <th className="px-3 py-2">Descripción del Compromiso</th>
+                            <th className="px-3 py-2">Responsable</th>
+                            <th className="px-3 py-2">Estado</th>
+                            <th className="px-3 py-2">Límite</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-slate-700 bg-white">
+                          {projectCommitments.map(c => {
+                            const isVencido = c.status === 'Vencido' || (c.due_date < currentDateStr && c.status !== 'Cumplido');
+                            return (
+                              <tr key={c.id}>
+                                <td className="px-3 py-2 font-medium text-slate-800">{c.description}</td>
+                                <td className="px-3 py-2">{c.assignee}</td>
+                                <td className="px-3 py-2">
+                                  <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${
+                                    isVencido 
+                                      ? 'bg-red-50 text-red-700' 
+                                      : c.status === 'Cumplido' 
+                                        ? 'bg-emerald-50 text-emerald-700' 
+                                        : 'bg-slate-100 text-slate-650'
+                                  }`}>
+                                    {isVencido ? 'VENCIDO' : c.status.toUpperCase()}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2">{c.due_date}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400 italic">No hay compromisos asociados a esta iniciativa.</p>
+                  )}
+                </div>
+
+                {/* Esfuerzo (Horas) */}
+                <div className="space-y-2 print-avoid-break">
+                  <h4 className="text-xs font-bold text-sky-700 uppercase tracking-wider border-b border-slate-100 pb-1">
+                    Control de Esfuerzo Incurrido (Horas de Trabajo)
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-slate-700">
+                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 space-y-1">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Horas Planificadas (Base)</span>
+                      <span className="text-lg font-extrabold text-slate-800">{totalEstimatedHours}h</span>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 space-y-1">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Horas Reales (Time Logs)</span>
+                      <span className="text-lg font-extrabold text-slate-800">{totalActualHours}h</span>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 space-y-1">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Desviación Consolidada</span>
+                      <span className={`text-lg font-extrabold ${hourDeviation > 0 ? 'text-red-600' : 'text-emerald-700'}`}>
+                        {totalEstimatedHours > 0 
+                          ? `${hourDeviation > 0 ? `+${hourDeviation}h (+${deviationPct}%)` : `${hourDeviation}h (${deviationPct}%)`}`
+                          : 'Sin línea base'}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-slate-500 italic leading-relaxed pt-1">
+                    * La desviación de esfuerzo se calcula en base a la sumatoria de las horas registradas en la bitácora física de logs de tiempo (`time_logs`) frente al plan estimado inicial del backlog de actividades.
                   </p>
                 </div>
-              </div>
 
-              {/* Decisiones requeridas */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold text-[#0284c7] uppercase tracking-wider border-b border-slate-100 pb-1">10. Decisiones Requeridas</h4>
-                <div className="p-3 bg-slate-50 border border-slate-150 rounded text-slate-700 h-[86px] overflow-y-auto font-medium">
-                  <p className="leading-tight">
-                    {project.id === 1 && "Ninguna decisión crítica requerida. Mantener monitoreo del avance del API de ventanillas."}
-                    {project.id === 2 && "Sponsor debe gestionar con directivos del Banco Central la asignación de certificados VPN."}
-                    {project.id === 3 && "Aprobación formal del Acta de Gobernanza por el Consejo de Administración."}
-                    {project.id === 4 && "Junta/Sponsor debe aprobar la firma del convenio comercial para reactivar firma OTP."}
-                  </p>
+                {/* Reuniones Recientes */}
+                <div className="space-y-2 print-avoid-break">
+                  <h4 className="text-xs font-bold text-sky-700 uppercase tracking-wider border-b border-slate-100 pb-1">
+                    Bitácora de Reuniones Recientes
+                  </h4>
+                  {projectMeetings.length > 0 ? (
+                    <div className="space-y-3">
+                      {projectMeetings.slice(0, 3).map(meet => (
+                        <div key={meet.id} className="bg-slate-50 p-3 rounded-lg border border-slate-100 text-xs">
+                          <div className="flex justify-between font-bold text-[10px] text-slate-400 mb-1">
+                            <span>Tipo: {meet.type}</span>
+                            <span>{new Date(meet.date_time).toLocaleDateString('es-ES')}</span>
+                          </div>
+                          <p className="font-semibold text-slate-850"><strong>Agenda:</strong> {meet.topics}</p>
+                          {meet.agreements && <p className="text-slate-600 mt-1"><strong>Acuerdos:</strong> {meet.agreements}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400 italic">No hay reuniones recientes registradas.</p>
+                  )}
                 </div>
-              </div>
 
-            </div>
-
-            {/* Block 11: Conclusión Ejecutiva */}
-            <div className="space-y-2 pt-2 text-xs">
-              <h4 className="text-xs font-bold text-[#0284c7] uppercase tracking-wider border-b border-slate-100 pb-1">11. Conclusión Ejecutiva BPMO</h4>
-              <div className="bg-sky-50 p-4 rounded-xl border border-sky-150 text-sky-950 font-medium leading-relaxed">
-                {project.id === 1 && "El proyecto avanza a velocidad constante. La base de datos QA y el piloto inicial se concluyeron con éxito. Se registra una desviación menor en esfuerzo por la limpieza de datos históricos de socios, pero sin impacto en la fecha de entrega objetiva."}
-                {project.id === 2 && "Desarrollo técnico al día. Se reporta un riesgo moderado en el cronograma por la demora en la asignación de credenciales VPN del Banco Central del Ecuador (BCE) para el SPI. El resto de módulos (biometría, transferencias internas) operan con éxito en QA."}
-                {project.id === 3 && "Proyecto en fase de aprestamiento y parametrización de metodologías. El cronograma arranca formalmente en Julio de 2026 con el apoyo del Gerente General como Sponsor principal."}
-                {project.id === 4 && "Desviación crítica en cronograma por retrasos del proveedor externo de Buró de Crédito y bloqueo legal en la firma de convenio OTP. Se requiere escalamiento urgente del Sponsor a nivel directivo para reactivar las firmas digitales."}
               </div>
             </div>
-
-          </div>
-        )}
+          );
+        })()}
       </div>
       <NewAdvanceModal
         isOpen={isAdvanceModalOpen}
