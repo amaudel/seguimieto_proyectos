@@ -758,3 +758,59 @@ export const updateProjectActivityStatus = async (
     throw err;
   }
 };
+
+export const createTimeLog = async (
+  timeLog: Omit<TimeLog, 'id' | 'user' | 'activity_name' | 'estimated_hours'>,
+  userId: string
+): Promise<TimeLog> => {
+  if (!userId) {
+    throw new Error('El identificador del perfil de usuario no está disponible. Registro bloqueado.');
+  }
+
+  const payload = {
+    project_id: timeLog.project_id,
+    activity_id: timeLog.activity_id,
+    user_id: timeLog.user_id,
+    date: timeLog.date,
+    actual_hours: Math.floor(timeLog.actual_hours),
+    type: timeLog.type,
+    description: timeLog.description,
+    notes: timeLog.notes || null,
+    created_by: userId,
+    updated_by: userId
+  };
+
+  if (!isSupabaseConfigured || !supabase) {
+    const act = mockActivities.find(a => String(a.id) === String(timeLog.activity_id));
+    const newLog: TimeLog = {
+      id: Math.random().toString(36).substr(2, 9),
+      project_id: timeLog.project_id,
+      activity_id: timeLog.activity_id,
+      activity_name: act?.name || 'Actividad Mock',
+      date: timeLog.date,
+      user: 'Administrador (Mock)',
+      user_id: timeLog.user_id,
+      description: timeLog.description,
+      type: timeLog.type,
+      estimated_hours: act?.estimated_hours || 0,
+      actual_hours: timeLog.actual_hours,
+      notes: timeLog.notes || ''
+    };
+    mockTimeLogs.push(newLog);
+    return newLog;
+  }
+
+  try {
+    const { data, error } = await supabase!
+      .from('time_logs')
+      .insert([payload])
+      .select('*, user:profiles!time_logs_user_id_fkey(first_name, last_name), activity:project_items(name, estimated_hours)')
+      .single();
+
+    if (error) throw error;
+    return mapTimeLog(data);
+  } catch (err: any) {
+    console.error('Error insertando registro de tiempo en Supabase:', err);
+    throw err;
+  }
+};
