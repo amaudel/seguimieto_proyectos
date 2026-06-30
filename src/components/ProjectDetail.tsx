@@ -22,7 +22,8 @@ import {
 
 
 import { NewAdvanceModal } from './NewAdvanceModal';
-import { createProjectAdvance } from '../services/projectsService';
+import { NewRiskModal } from './NewRiskModal';
+import { createProjectAdvance, createProjectRisk } from '../services/projectsService';
 
 interface ProjectDetailProps {
   project: Project;
@@ -36,6 +37,7 @@ interface ProjectDetailProps {
   userProfileId: string | null;
   adminName: string;
   onAddAdvance: (newAdvance: ProjectAdvance) => void;
+  onAddRisk: (newRisk: ProjectRisk) => void;
 }
 
 type TabType = 'resumen' | 'avances' | 'actividades' | 'reuniones' | 'compromisos' | 'tiempos' | 'riesgos' | 'reporte';
@@ -51,10 +53,12 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
   onBack,
   userProfileId,
   adminName,
-  onAddAdvance
+  onAddAdvance,
+  onAddRisk
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('resumen');
   const [isAdvanceModalOpen, setIsAdvanceModalOpen] = useState(false);
+  const [isRiskModalOpen, setIsRiskModalOpen] = useState(false);
 
   const handleSaveAdvance = async (advanceData: Omit<ProjectAdvance, 'id' | 'reporter'>) => {
     if (!userProfileId) {
@@ -65,6 +69,19 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
       onAddAdvance(newAdv);
     } catch (err) {
       console.error('Error registrando avance en el detalle:', err);
+      throw err;
+    }
+  };
+
+  const handleSaveRisk = async (riskData: Omit<ProjectRisk, 'id' | 'assignee'>) => {
+    if (!userProfileId) {
+      throw new Error('No se ha podido resolver tu identificador de perfil (profile_id) en el sistema. Registro bloqueado.');
+    }
+    try {
+      const newRisk = await createProjectRisk(riskData, userProfileId);
+      onAddRisk(newRisk);
+    } catch (err) {
+      console.error('Error registrando riesgo en el detalle:', err);
       throw err;
     }
   };
@@ -908,18 +925,26 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
         {/* 7. RIESGOS TAB */}
         {activeTab === 'riesgos' && (
           <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-            <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+            <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50">
               <div>
                 <h3 className="font-bold text-slate-900 text-sm">Matriz de Riesgos, Bloqueos e Impedimentos</h3>
                 <p className="text-[11px] text-slate-400">Eventos o condiciones que amenazan el cumplimiento del proyecto.</p>
               </div>
-              <div className="flex items-center gap-3 text-[11px]">
-                <span className="font-semibold text-red-600 bg-red-50 border border-red-100 px-2 py-0.5 rounded-full">
-                  {activeBlockagesCount} Bloqueos Activos
-                </span>
-                <span className="font-semibold text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">
-                  {activeRisksCount} Riesgos Altos
-                </span>
+              <div className="flex items-center gap-3 shrink-0">
+                <button
+                  onClick={() => setIsRiskModalOpen(true)}
+                  className="flex items-center justify-center gap-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-xs"
+                >
+                  <AlertTriangle className="w-4 h-4" /> Registrar Riesgo / Bloqueo
+                </button>
+                <div className="hidden md:flex items-center gap-3 text-[11px]">
+                  <span className="font-semibold text-red-600 bg-red-50 border border-red-100 px-2 py-0.5 rounded-full">
+                    {activeBlockagesCount} Bloqueos Activos
+                  </span>
+                  <span className="font-semibold text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">
+                    {activeRisksCount} Riesgos Altos
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -1265,6 +1290,13 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
         isOpen={isAdvanceModalOpen}
         onClose={() => setIsAdvanceModalOpen(false)}
         onSave={handleSaveAdvance}
+        projectId={projectRaw.id}
+        adminName={adminName}
+      />
+      <NewRiskModal
+        isOpen={isRiskModalOpen}
+        onClose={() => setIsRiskModalOpen(false)}
+        onSave={handleSaveRisk}
         projectId={projectRaw.id}
         adminName={adminName}
       />
