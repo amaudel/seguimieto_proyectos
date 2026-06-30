@@ -480,3 +480,51 @@ export const createProjectAdvance = async (
     throw err;
   }
 };
+
+export const createProjectRisk = async (
+  risk: Omit<ProjectRisk, 'id' | 'assignee'>,
+  userId: string
+): Promise<ProjectRisk> => {
+  if (!userId) {
+    throw new Error('El identificador del perfil de usuario no está disponible. No se puede auditar la creación del riesgo.');
+  }
+
+  const payload = {
+    project_id: risk.project_id,
+    type: risk.type,
+    description: risk.description,
+    impact: risk.impact,
+    probability: risk.probability,
+    status: risk.status,
+    date_identified: risk.date_identified,
+    mitigation_action: risk.mitigation_action || null,
+    notes: risk.notes || null,
+    assignee_id: null,
+    created_by: userId,
+    updated_by: userId
+  };
+
+  if (!isSupabaseConfigured || !supabase) {
+    const newRisk: ProjectRisk = {
+      ...risk,
+      id: Math.random().toString(36).substr(2, 9),
+      assignee: 'Sin asignar'
+    };
+    mockRisks.push(newRisk);
+    return newRisk;
+  }
+
+  try {
+    const { data, error } = await supabase!
+      .from('project_risks')
+      .insert([payload])
+      .select('*, assignee:profiles!project_risks_assignee_id_fkey(first_name, last_name)')
+      .single();
+
+    if (error) throw error;
+    return mapRisk(data);
+  } catch (err: any) {
+    console.error('Error insertando riesgo en Supabase:', err);
+    throw err;
+  }
+};
