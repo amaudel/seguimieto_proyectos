@@ -354,6 +354,9 @@ function App() {
             timeLogs={timeLogs}
             risks={risks}
             onBack={() => setView('projects')}
+            userProfileId={userProfileId}
+            adminName={session?.user?.email || 'Andrés Delgado'}
+            onAddAdvance={(newAdv) => setAdvances(prev => [...prev, newAdv])}
           />
         ) : view === 'detail' ? (
           <div className="text-center py-12">
