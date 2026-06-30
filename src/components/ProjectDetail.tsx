@@ -31,9 +31,10 @@ import { NewRiskModal } from './NewRiskModal';
 import { NewCommitmentModal } from './NewCommitmentModal';
 import { NewActivityModal } from './NewActivityModal';
 import { NewTimeLogModal } from './NewTimeLogModal';
+import { NewMeetingModal } from './NewMeetingModal';
 import { CommitmentStatusModal } from './CommitmentStatusModal';
 import { RiskStatusModal } from './RiskStatusModal';
-import { createProjectAdvance, createProjectRisk, createProjectCommitment, createProjectActivity, createTimeLog, updateProjectCommitmentStatus, updateProjectRiskStatus, updateProjectActivityStatus } from '../services/projectsService';
+import { createProjectAdvance, createProjectRisk, createProjectCommitment, createProjectActivity, createTimeLog, createProjectMeeting, updateProjectCommitmentStatus, updateProjectRiskStatus, updateProjectActivityStatus } from '../services/projectsService';
 
 interface ProjectDetailProps {
   project: Project;
@@ -54,6 +55,7 @@ interface ProjectDetailProps {
   onAddActivity: (newActivity: ProjectActivity) => void;
   onUpdateActivity: (updatedActivity: ProjectActivity) => void;
   onAddTimeLog: (newTimeLog: TimeLog) => void;
+  onAddMeeting: (newMeeting: ProjectMeeting) => void;
 }
 
 type TabType = 'resumen' | 'avances' | 'actividades' | 'reuniones' | 'compromisos' | 'tiempos' | 'riesgos' | 'reporte';
@@ -76,7 +78,8 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
   onUpdateRisk,
   onAddActivity,
   onUpdateActivity,
-  onAddTimeLog
+  onAddTimeLog,
+  onAddMeeting
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('resumen');
   const [isAdvanceModalOpen, setIsAdvanceModalOpen] = useState(false);
@@ -84,7 +87,9 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
   const [isCommitmentModalOpen, setIsCommitmentModalOpen] = useState(false);
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
   const [isTimeLogModalOpen, setIsTimeLogModalOpen] = useState(false);
+  const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [expandedMeetingId, setExpandedMeetingId] = useState<string | null>(null);
   const [pendingStatusChange, setPendingStatusChange] = useState<{
     commitment: ProjectCommitment;
     newStatus: CommitmentStatus;
@@ -151,6 +156,19 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
       onAddTimeLog(newLog);
     } catch (err) {
       console.error('Error registrando log de tiempo en el detalle:', err);
+      throw err;
+    }
+  };
+
+  const handleSaveMeeting = async (meetingData: Omit<ProjectMeeting, 'id' | 'attendees'>, attendeesProfileIds: string[]) => {
+    if (!userProfileId) {
+      throw new Error('No se ha podido resolver tu identificador de perfil (profile_id) en el sistema. Registro bloqueado.');
+    }
+    try {
+      const newMeet = await createProjectMeeting(meetingData, attendeesProfileIds, userProfileId);
+      onAddMeeting(newMeet);
+    } catch (err) {
+      console.error('Error registrando reunión en el detalle:', err);
       throw err;
     }
   };
@@ -930,61 +948,110 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
         {/* 4. REUNIONES TAB */}
         {activeTab === 'reuniones' && (
           <div className="space-y-4">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50">
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">Minutas y Reuniones de Seguimiento</h3>
+                <p className="text-[11px] text-slate-400">Bitácora oficial de comités, daily stands o planning sprints.</p>
+              </div>
+              {userProfileId && (
+                <button
+                  onClick={() => setIsMeetingModalOpen(true)}
+                  className="flex items-center justify-center gap-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-xs shrink-0"
+                >
+                  <Users className="w-4 h-4" /> Registrar Reunión
+                </button>
+              )}
+            </div>
+
             {projectMeetings.length > 0 ? (
-              projectMeetings.map(meet => (
-                <div key={meet.id} className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
-                  {/* Meeting Header */}
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
-                    <div className="space-y-1">
-                      <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 uppercase">
-                        {meet.type}
-                      </span>
-                      <h4 className="font-bold text-slate-800 text-sm">Comité / Reunión de Seguimiento</h4>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs text-slate-500 font-semibold bg-slate-50 px-2.5 py-1 rounded border border-slate-100">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{meet.date_time}</span>
-                    </div>
-                  </div>
-
-                  {/* Meeting Body Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
-                    <div className="md:col-span-2 space-y-3">
-                      <div>
-                        <strong className="text-slate-600 block mb-0.5">Temas Tratados:</strong>
-                        <p className="text-slate-700 leading-tight bg-slate-50 p-2.5 rounded border border-slate-100">{meet.topics}</p>
+              projectMeetings.map(meet => {
+                const isExpanded = String(expandedMeetingId) === String(meet.id);
+                return (
+                  <div key={meet.id} className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden transition-all duration-200">
+                    {/* Meeting Header Bar (Clickable to Toggle) */}
+                    <div 
+                      onClick={() => setExpandedMeetingId(isExpanded ? null : String(meet.id))}
+                      className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50/50 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-100"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
+                        <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 uppercase whitespace-nowrap">
+                          {meet.type}
+                        </span>
+                        <h4 className="font-bold text-slate-800 text-xs sm:text-sm">
+                          Minuta de Reunión: {meet.topics.substring(0, 45)}{meet.topics.length > 45 ? '...' : ''}
+                        </h4>
                       </div>
-                      <div>
-                        <strong className="text-slate-600 block mb-0.5">Decisiones Tomadas:</strong>
-                        <p className="text-slate-700 leading-tight bg-slate-50 p-2.5 rounded border border-slate-100">{meet.decisions}</p>
-                      </div>
-                      <div>
-                        <strong className="text-slate-600 block mb-0.5">Acuerdos Generales:</strong>
-                        <p className="text-slate-700 leading-tight bg-slate-50 p-2.5 rounded border border-slate-100">{meet.agreements}</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                        <strong className="text-slate-600 block mb-1">Asistentes:</strong>
-                        <ul className="list-disc pl-4 space-y-0.5 text-slate-700">
-                          {meet.attendees.map((att, i) => (
-                            <li key={i}>{att}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      {meet.impediments && (
-                        <div className="bg-red-50 p-3 rounded-lg border border-red-100 text-red-900">
-                          <strong className="text-red-700 block mb-1">Impedimentos / Riesgos:</strong>
-                          <p className="leading-tight">{meet.impediments}</p>
+                      <div className="flex items-center gap-2.5 shrink-0 w-full sm:w-auto justify-between sm:justify-end">
+                        <div className="flex items-center gap-1 text-[11px] text-slate-500 font-semibold bg-white px-2 py-0.5 rounded border border-slate-150">
+                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{new Date(meet.date_time).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}</span>
                         </div>
-                      )}
+                        <span className="text-slate-400 text-xs font-semibold select-none hidden sm:inline">
+                          {isExpanded ? '▲ Colapsar' : '▼ Expandir'}
+                        </span>
+                      </div>
                     </div>
+
+                    {/* Expandable Meeting Details */}
+                    {isExpanded && (
+                      <div className="p-5 border-t border-slate-100 text-left space-y-4 animate-slide-down">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
+                          <div className="md:col-span-2 space-y-4">
+                            <div>
+                              <strong className="text-slate-600 block mb-1 uppercase tracking-wide text-[10px]">Temas Tratados:</strong>
+                              <p className="text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-100 whitespace-pre-wrap">{meet.topics}</p>
+                            </div>
+                            {meet.decisions && (
+                              <div>
+                                <strong className="text-slate-600 block mb-1 uppercase tracking-wide text-[10px]">Decisiones Tomadas:</strong>
+                                <p className="text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-100 whitespace-pre-wrap">{meet.decisions}</p>
+                              </div>
+                            )}
+                            {meet.agreements && (
+                              <div>
+                                <strong className="text-slate-600 block mb-1 uppercase tracking-wide text-[10px]">Acuerdos Establecidos:</strong>
+                                <p className="text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-100 whitespace-pre-wrap">{meet.agreements}</p>
+                              </div>
+                            )}
+                            {meet.notes && (
+                              <div>
+                                <strong className="text-slate-600 block mb-1 uppercase tracking-wide text-[10px]">Notas / Observaciones:</strong>
+                                <p className="text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-100 whitespace-pre-wrap">{meet.notes}</p>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="space-y-4">
+                            <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                              <strong className="text-slate-600 block mb-2 uppercase tracking-wide text-[10px]">Asistentes Registrados:</strong>
+                              {meet.attendees.length > 0 ? (
+                                <ul className="space-y-1.5 text-slate-700">
+                                  {meet.attendees.map((att, i) => (
+                                    <li key={i} className="flex items-center gap-1.5">
+                                      <div className="w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0" />
+                                      <span>{att}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <span className="text-slate-400 italic">Sin asistentes registrados.</span>
+                              )}
+                            </div>
+                            {meet.impediments && (
+                              <div className="bg-red-50 p-4 rounded-lg border border-red-100 text-red-900">
+                                <strong className="text-red-700 block mb-1 uppercase tracking-wide text-[10px]">Impedimentos / Riesgos:</strong>
+                                <p className="leading-relaxed whitespace-pre-wrap">{meet.impediments}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
-              <p className="text-xs text-slate-400 text-center py-10 bg-white rounded-xl border border-slate-200">No hay reuniones registradas.</p>
+              <p className="text-xs text-slate-400 text-center py-10 bg-white rounded-xl border border-slate-200 shadow-xs">No hay reuniones registradas.</p>
             )}
           </div>
         )}
@@ -1586,6 +1653,12 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
         onSave={handleSaveTimeLog}
         projectId={projectRaw.id}
         activities={activities}
+      />
+      <NewMeetingModal
+        isOpen={isMeetingModalOpen}
+        onClose={() => setIsMeetingModalOpen(false)}
+        onSave={handleSaveMeeting}
+        projectId={projectRaw.id}
       />
     </div>
   );
