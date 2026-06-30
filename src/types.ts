@@ -119,6 +119,7 @@ export interface TimeLog {
   activity_name: string;
   date: string;
   user: string;
+  user_id?: string;
   description: string;
   type: string;
   estimated_hours: number;
