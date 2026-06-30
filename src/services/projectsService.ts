@@ -433,3 +433,50 @@ export const createProject = async (
     throw err;
   }
 };
+
+export const createProjectAdvance = async (
+  advance: Omit<ProjectAdvance, 'id' | 'reporter'>,
+  userId: string
+): Promise<ProjectAdvance> => {
+  if (!userId) {
+    throw new Error('El identificador del perfil de usuario no está disponible. No se puede auditar la creación del avance.');
+  }
+
+  const payload = {
+    project_id: advance.project_id,
+    date: advance.date,
+    progress_pct: Number(advance.progress_pct),
+    summary: advance.summary,
+    completed_tasks: advance.completed_tasks || null,
+    value_delivered: advance.value_delivered || null,
+    reporter_id: userId,
+    next_steps: advance.next_steps || null,
+    notes: advance.notes || null,
+    created_by: userId,
+    updated_by: userId
+  };
+
+  if (!isSupabaseConfigured || !supabase) {
+    const newAdv: ProjectAdvance = {
+      ...advance,
+      id: Math.random().toString(36).substr(2, 9),
+      reporter: 'Administrador (Mock)'
+    };
+    mockAdvances.push(newAdv);
+    return newAdv;
+  }
+
+  try {
+    const { data, error } = await supabase!
+      .from('project_advances')
+      .insert([payload])
+      .select('*, reporter:profiles!project_advances_reporter_id_fkey(first_name, last_name)')
+      .single();
+
+    if (error) throw error;
+    return mapAdvance(data);
+  } catch (err: any) {
+    console.error('Error insertando avance en Supabase:', err);
+    throw err;
+  }
+};
