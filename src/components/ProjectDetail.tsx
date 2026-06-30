@@ -8,7 +8,8 @@ import type {
   TimeLog, 
   ProjectRisk,
   CommitmentStatus,
-  RiskStatus
+  RiskStatus,
+  KanbanStatus
 } from '../types';
 import { 
   ArrowLeft, 
@@ -19,16 +20,18 @@ import {
   FileText, 
   FolderGit2, 
   Users, 
-  CheckCircle
+  CheckCircle,
+  Layers
 } from 'lucide-react';
 
 
 import { NewAdvanceModal } from './NewAdvanceModal';
 import { NewRiskModal } from './NewRiskModal';
 import { NewCommitmentModal } from './NewCommitmentModal';
+import { NewActivityModal } from './NewActivityModal';
 import { CommitmentStatusModal } from './CommitmentStatusModal';
 import { RiskStatusModal } from './RiskStatusModal';
-import { createProjectAdvance, createProjectRisk, createProjectCommitment, updateProjectCommitmentStatus, updateProjectRiskStatus } from '../services/projectsService';
+import { createProjectAdvance, createProjectRisk, createProjectCommitment, createProjectActivity, updateProjectCommitmentStatus, updateProjectRiskStatus, updateProjectActivityStatus } from '../services/projectsService';
 
 interface ProjectDetailProps {
   project: Project;
@@ -46,6 +49,8 @@ interface ProjectDetailProps {
   onAddCommitment: (newCommitment: ProjectCommitment) => void;
   onUpdateCommitment: (updatedCommitment: ProjectCommitment) => void;
   onUpdateRisk: (updatedRisk: ProjectRisk) => void;
+  onAddActivity: (newActivity: ProjectActivity) => void;
+  onUpdateActivity: (updatedActivity: ProjectActivity) => void;
 }
 
 type TabType = 'resumen' | 'avances' | 'actividades' | 'reuniones' | 'compromisos' | 'tiempos' | 'riesgos' | 'reporte';
@@ -65,12 +70,15 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
   onAddRisk,
   onAddCommitment,
   onUpdateCommitment,
-  onUpdateRisk
+  onUpdateRisk,
+  onAddActivity,
+  onUpdateActivity
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('resumen');
   const [isAdvanceModalOpen, setIsAdvanceModalOpen] = useState(false);
   const [isRiskModalOpen, setIsRiskModalOpen] = useState(false);
   const [isCommitmentModalOpen, setIsCommitmentModalOpen] = useState(false);
+  const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [pendingStatusChange, setPendingStatusChange] = useState<{
     commitment: ProjectCommitment;
@@ -112,6 +120,19 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
       onAddCommitment(newComm);
     } catch (err) {
       console.error('Error registrando compromiso en el detalle:', err);
+      throw err;
+    }
+  };
+
+  const handleSaveActivity = async (activityData: Omit<ProjectActivity, 'id' | 'assignee'>) => {
+    if (!userProfileId) {
+      throw new Error('No se ha podido resolver tu identificador de perfil (profile_id) en el sistema. Registro bloqueado.');
+    }
+    try {
+      const newAct = await createProjectActivity(activityData, userProfileId);
+      onAddActivity(newAct);
+    } catch (err) {
+      console.error('Error registrando actividad en el detalle:', err);
       throw err;
     }
   };
@@ -213,6 +234,29 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
       // Revertir el dropdown al estado anterior
       onUpdateRisk({ ...risk, status: oldStatus });
       throw err;
+    }
+  };
+
+  const handleActivityStatusChange = async (activity: ProjectActivity, newStatus: KanbanStatus) => {
+    if (!userProfileId) {
+      alert('No se ha podido resolver tu identificador de perfil (profile_id) en el sistema. Actualización bloqueada.');
+      return;
+    }
+
+    if (activity.kanban_status === newStatus) return;
+
+    const oldStatus = activity.kanban_status;
+    try {
+      onUpdateActivity({ ...activity, kanban_status: newStatus });
+      const updated = await updateProjectActivityStatus(
+        String(activity.id),
+        newStatus,
+        userProfileId
+      );
+      onUpdateActivity(updated);
+    } catch (err: any) {
+      alert(`Error al actualizar el estado de la actividad: ${err.message || err}`);
+      onUpdateActivity({ ...activity, kanban_status: oldStatus });
     }
   };
 
@@ -750,21 +794,29 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
         {/* 3. ACTIVIDADES TAB */}
         {activeTab === 'actividades' && (
           <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-            <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+            <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50">
               <div>
                 <h3 className="font-bold text-slate-900 text-sm">Backlog de Actividades / Kanban</h3>
                 <p className="text-[11px] text-slate-400">Tareas operativas del cronograma o sprint.</p>
               </div>
-              <div className="flex items-center gap-3 text-[11px]">
-                <span className="flex items-center gap-1 font-semibold text-slate-600">
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-                  {projectActivities.filter(a => a.kanban_status === 'Terminado').length} Terminadas
-                </span>
-                <span className="text-slate-300">|</span>
-                <span className="flex items-center gap-1 font-semibold text-slate-600">
-                  <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
-                  {overdueActivitiesCount} Vencidas
-                </span>
+              <div className="flex items-center gap-3 shrink-0">
+                <button
+                  onClick={() => setIsActivityModalOpen(true)}
+                  className="flex items-center justify-center gap-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-xs shrink-0"
+                >
+                  <Layers className="w-4 h-4" /> Registrar Actividad
+                </button>
+                <div className="hidden md:flex items-center gap-3 text-[11px]">
+                  <span className="flex items-center gap-1 font-semibold text-slate-600">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+                    {projectActivities.filter(a => a.kanban_status === 'Terminado').length} Terminadas
+                  </span>
+                  <span className="text-slate-300">|</span>
+                  <span className="flex items-center gap-1 font-semibold text-slate-600">
+                    <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
+                    {overdueActivitiesCount} Vencidas
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -820,17 +872,27 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                           </div>
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap">
-                          <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold border ${
-                            act.kanban_status === 'Terminado'
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                              : act.kanban_status === 'En progreso'
-                                ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                : act.kanban_status === 'Bloqueado'
-                                  ? 'bg-red-50 text-red-700 border-red-200 animate-pulse'
-                                  : 'bg-slate-100 text-slate-600 border-slate-200'
-                          }`}>
-                            {act.kanban_status}
-                          </span>
+                          <select
+                            value={act.kanban_status}
+                            onChange={(e) => handleActivityStatusChange(act, e.target.value as KanbanStatus)}
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold border focus:outline-none focus:ring-1 focus:ring-sky-500 cursor-pointer ${
+                              act.kanban_status === 'Terminado'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                : act.kanban_status === 'En progreso'
+                                  ? 'bg-sky-50 text-sky-700 border-sky-100'
+                                  : act.kanban_status === 'Bloqueado'
+                                    ? 'bg-red-50 text-red-700 border-red-100'
+                                    : act.kanban_status === 'En revisión'
+                                      ? 'bg-indigo-50 text-indigo-700 border-indigo-100'
+                                      : 'bg-slate-100 text-slate-700 border-slate-200'
+                            }`}
+                          >
+                            <option value="Por hacer">Por hacer</option>
+                            <option value="En progreso">En progreso</option>
+                            <option value="Bloqueado">Bloqueado</option>
+                            <option value="En revisión">En revisión</option>
+                            <option value="Terminado">Terminado</option>
+                          </select>
                         </td>
                       </tr>
                     ))
@@ -1482,6 +1544,13 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
         onConfirm={handleConfirmRiskStatusChange}
         status={pendingRiskStatusChange?.newStatus || null}
         currentNotes={pendingRiskStatusChange?.risk.notes || ''}
+      />
+      <NewActivityModal
+        isOpen={isActivityModalOpen}
+        onClose={() => setIsActivityModalOpen(false)}
+        onSave={handleSaveActivity}
+        projectId={projectRaw.id}
+        adminName={adminName}
       />
     </div>
   );
