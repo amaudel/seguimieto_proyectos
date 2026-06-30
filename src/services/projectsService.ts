@@ -574,3 +574,48 @@ export const createProjectCommitment = async (
     throw err;
   }
 };
+
+export const updateProjectCommitmentStatus = async (
+  commitmentId: string,
+  status: string,
+  notes: string,
+  userId: string
+): Promise<ProjectCommitment> => {
+  if (!userId) {
+    throw new Error('El identificador del perfil de usuario no está disponible. No se puede auditar la actualización del compromiso.');
+  }
+
+  const payload = {
+    status,
+    notes,
+    updated_by: userId
+  };
+
+  if (!isSupabaseConfigured || !supabase) {
+    const idx = mockCommitments.findIndex(c => String(c.id) === String(commitmentId));
+    if (idx !== -1) {
+      mockCommitments[idx] = {
+        ...mockCommitments[idx],
+        status: status as any,
+        notes: notes
+      };
+      return mockCommitments[idx];
+    }
+    throw new Error('Compromiso no encontrado en mockData.');
+  }
+
+  try {
+    const { data, error } = await supabase!
+      .from('meeting_commitments')
+      .update(payload)
+      .eq('id', commitmentId)
+      .select('*, assignee:profiles!meeting_commitments_assignee_id_fkey(first_name, last_name)')
+      .single();
+
+    if (error) throw error;
+    return mapCommitment(data);
+  } catch (err: any) {
+    console.error('Error actualizando compromiso en Supabase:', err);
+    throw err;
+  }
+};
