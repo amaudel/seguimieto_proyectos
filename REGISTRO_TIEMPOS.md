@@ -24,7 +24,8 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 | **Fase 6C** | Gestión de Actividades del Proyecto | Completado | 5.0 | 4.0 | -1.0 | -20.0% |
 | **Fase 6D** | Registro de Tiempos de Esfuerzo | Completado | 4.0 | 3.2 | -0.8 | -20.0% |
 | **Fase 6E** | Gestión de Reuniones y Minutas | Completado | 5.0 | 4.0 | -1.0 | -20.0% |
-| **Total** | **Gobernanza Completa del Proyecto** | **En Progreso**| **88.0** | **63.8** | -- | -- |
+| **Fase 7A** | Reportes Ejecutivos Consolidados | Completado | 5.0 | 4.0 | -1.0 | -20.0% |
+| **Total** | **Gobernanza Completa del Proyecto** | **En Progreso**| **93.0** | **67.8** | -- | -- |
 
 ---
 
@@ -247,4 +248,17 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 | Formulario de Nueva Reunión (Minuta) | 2026-06-30 | A. Delgado / AI | 2.0 | 1.6 | Finalizado | Maquetación del modal controlled `NewMeetingModal.tsx` que valida campos requeridos, asocia asistentes reales y bloquea campos vacíos. |
 | Integración de Cascada y Cards UI | 2026-06-30 | A. Delgado / AI | 2.0 | 1.6 | Finalizado | Implementación en projectsService de la cascada de inserción en `project_meetings` y `meeting_attendees` secuencialmente, y rediseño de la UI con tarjetas expandibles. |
 | Compilación y Validación Final | 2026-06-30 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Ejecución exitosa de `npm run build` en 958ms con cero errores en types.ts y componentes. |
+
+---
+
+### Fase 7A: Reportes Ejecutivos Consolidados (Completado)
+* **Fecha de Inicio**: 2026-06-30
+* **Fecha de Fin**: 2026-06-30
+
+| Actividad / Tarea | Fecha | Responsable | Horas Estimadas | Horas Reales | Estado | Detalle / Entregables |
+| :--- | :--- | :--- | :---: | :---: | :---: | :--- |
+| Diagnóstico de Pestaña de Reporte | 2026-06-30 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Inspección del tab reporte original y diseño del mapeo reactivo dinámico. |
+| Fórmulas y Semáforos en Caliente | 2026-06-30 | A. Delgado / AI | 1.5 | 1.2 | Finalizado | Implementación de las reglas matemáticas de desviación de esfuerzo, avance y semáforos de alcance y tiempos. |
+| Maquetación Impresión e Integración | 2026-06-30 | A. Delgado / AI | 2.5 | 2.0 | Finalizado | Maquetación del reporte, inyección del botón nativo window.print() y estilos CSS de impresión acotados a la clase contenedora del reporte. |
+| Compilación y Validación Final | 2026-06-30 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Ejecución de `npm run build` garantizando cero advertencias e integridad del bundler. |
 
