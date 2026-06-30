@@ -16,7 +16,8 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 | **Fase 4C** | Refactor y Mejoras Visuales UX | Completado | 6.0 | 4.8 | -1.2 | -20.0% |
 | **Fase 4D** | Pulido Visual y QA Responsivo | Completado | 4.0 | 3.5 | -0.5 | -12.5% |
 | **Fase 5A** | Formulario Guiado de Proyectos | Completado | 6.0 | 4.9 | -1.1 | -18.3% |
-| **Total** | **Gobernanza Completa del Proyecto** | **En Progreso**| **51.0** | **34.4** | -- | -- |
+| **Fase 5B** | Creación de Avances del Proyecto | Completado | 5.0 | 3.9 | -1.1 | -22.0% |
+| **Total** | **Gobernanza Completa del Proyecto** | **En Progreso**| **56.0** | **38.3** | -- | -- |
 
 ---
 
@@ -135,3 +136,17 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 | Wizard Component de Nuevos Proyectos | 2026-06-29 | A. Delgado / AI | 2.5 | 2.0 | Finalizado | Maquetación del wizard en 5 pasos controlado con validaciones de fechas y esfuerzo. |
 | Integración de Auditoría y RLS | 2026-06-29 | A. Delgado / AI | 1.5 | 1.2 | Finalizado | Recuperación de profile_id asíncrona al iniciar sesión, control de ruteo y handler de inserción. |
 | Testeo Local y Validación de Compilación | 2026-06-29 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Compilación exitosa con `npm run build` en 553ms sin advertencias. |
+
+---
+
+### Fase 5B: Creación de Avances del Proyecto (Completado)
+* **Fecha de Inicio**: 2026-06-30
+* **Fecha de Fin**: 2026-06-30
+
+| Actividad / Tarea | Fecha | Responsable | Horas Estimadas | Horas Reales | Estado | Detalle / Entregables |
+| :--- | :--- | :--- | :---: | :---: | :---: | :--- |
+| Diagnóstico, RLS y Migraciones SQL | 2026-06-30 | A. Delgado / AI | 1.0 | 0.8 | Finalizado | Inspección del esquema `project_advances` y creación de scripts `5b_project_advances_fields.sql` y `5b_project_advances_rls.sql`. |
+| Formulario de Nuevo Avance (Modal) | 2026-06-30 | A. Delgado / AI | 2.0 | 1.5 | Finalizado | Maquetación del componente modal controlado `NewAdvanceModal.tsx` con restricciones numéricas (0-100). |
+| Integración de API y Callbacks | 2026-06-30 | A. Delgado / AI | 1.5 | 1.2 | Finalizado | Vinculación del handler de inserción con la prop `onAddAdvance` y el `userProfileId` de auditoría. |
+| Compilación y Validación Final | 2026-06-30 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Ejecución de `npm run build` exitosa en 832ms para verificación de tipos. |
+
