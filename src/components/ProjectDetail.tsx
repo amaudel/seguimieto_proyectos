@@ -23,7 +23,8 @@ import {
 
 import { NewAdvanceModal } from './NewAdvanceModal';
 import { NewRiskModal } from './NewRiskModal';
-import { createProjectAdvance, createProjectRisk } from '../services/projectsService';
+import { NewCommitmentModal } from './NewCommitmentModal';
+import { createProjectAdvance, createProjectRisk, createProjectCommitment } from '../services/projectsService';
 
 interface ProjectDetailProps {
   project: Project;
@@ -38,6 +39,7 @@ interface ProjectDetailProps {
   adminName: string;
   onAddAdvance: (newAdvance: ProjectAdvance) => void;
   onAddRisk: (newRisk: ProjectRisk) => void;
+  onAddCommitment: (newCommitment: ProjectCommitment) => void;
 }
 
 type TabType = 'resumen' | 'avances' | 'actividades' | 'reuniones' | 'compromisos' | 'tiempos' | 'riesgos' | 'reporte';
@@ -54,11 +56,13 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
   userProfileId,
   adminName,
   onAddAdvance,
-  onAddRisk
+  onAddRisk,
+  onAddCommitment
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('resumen');
   const [isAdvanceModalOpen, setIsAdvanceModalOpen] = useState(false);
   const [isRiskModalOpen, setIsRiskModalOpen] = useState(false);
+  const [isCommitmentModalOpen, setIsCommitmentModalOpen] = useState(false);
 
   const handleSaveAdvance = async (advanceData: Omit<ProjectAdvance, 'id' | 'reporter'>) => {
     if (!userProfileId) {
@@ -82,6 +86,19 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
       onAddRisk(newRisk);
     } catch (err) {
       console.error('Error registrando riesgo en el detalle:', err);
+      throw err;
+    }
+  };
+
+  const handleSaveCommitment = async (commitmentData: Omit<ProjectCommitment, 'id' | 'assignee'>) => {
+    if (!userProfileId) {
+      throw new Error('No se ha podido resolver tu identificador de perfil (profile_id) en el sistema. Registro bloqueado.');
+    }
+    try {
+      const newComm = await createProjectCommitment(commitmentData, userProfileId);
+      onAddCommitment(newComm);
+    } catch (err) {
+      console.error('Error registrando compromiso en el detalle:', err);
       throw err;
     }
   };
@@ -782,9 +799,17 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
         {/* 5. COMPROMISOS TAB */}
         {activeTab === 'compromisos' && (
           <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-            <div className="p-4 border-b border-slate-200 bg-slate-50">
-              <h3 className="font-bold text-slate-900 text-sm">Compromisos de Comités y Reuniones</h3>
-              <p className="text-[11px] text-slate-400">Responsabilidades concretas acordadas y fechas límite.</p>
+            <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50">
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">Compromisos del Proyecto</h3>
+                <p className="text-[11px] text-slate-400">Responsabilidades concretas acordadas y fechas límite.</p>
+              </div>
+              <button
+                onClick={() => setIsCommitmentModalOpen(true)}
+                className="flex items-center justify-center gap-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-xs shrink-0 self-start sm:self-auto"
+              >
+                <CheckCircle className="w-4 h-4" /> Registrar Compromiso
+              </button>
             </div>
 
             <div className="overflow-x-auto">
@@ -1297,6 +1322,13 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
         isOpen={isRiskModalOpen}
         onClose={() => setIsRiskModalOpen(false)}
         onSave={handleSaveRisk}
+        projectId={projectRaw.id}
+        adminName={adminName}
+      />
+      <NewCommitmentModal
+        isOpen={isCommitmentModalOpen}
+        onClose={() => setIsCommitmentModalOpen(false)}
+        onSave={handleSaveCommitment}
         projectId={projectRaw.id}
         adminName={adminName}
       />
