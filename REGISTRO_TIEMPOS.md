@@ -18,7 +18,8 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 | **Fase 5A** | Formulario Guiado de Proyectos | Completado | 6.0 | 4.9 | -1.1 | -18.3% |
 | **Fase 5B** | Creación de Avances del Proyecto | Completado | 5.0 | 3.9 | -1.1 | -22.0% |
 | **Fase 5C** | Registro de Riesgos e Impedimentos | Completado | 5.0 | 4.0 | -1.0 | -20.0% |
-| **Total** | **Gobernanza Completa del Proyecto** | **En Progreso**| **61.0** | **42.3** | -- | -- |
+| **Fase 5D** | Registro de Compromisos del Proyecto| Completado | 5.0 | 3.9 | -1.1 | -22.0% |
+| **Total** | **Gobernanza Completa del Proyecto** | **En Progreso**| **66.0** | **46.2** | -- | -- |
 
 ---
 
@@ -163,4 +164,17 @@ Este documento registra las horas de esfuerzo invertidas en el diseño, desarrol
 | Formulario de Nuevo Riesgo (Modal) | 2026-06-30 | A. Delgado / AI | 2.0 | 1.6 | Finalizado | Maquetación del componente modal controlado `NewRiskModal.tsx` con dropdowns para tipo, impacto, probabilidad y estado conformes con los CHECK constraints. |
 | Integración de API y Callback en App | 2026-06-30 | A. Delgado / AI | 1.5 | 1.2 | Finalizado | Implementación del helper `createProjectRisk` y vinculación del callback `onAddRisk` para refresco reactivo del listado en el detalle. |
 | Compilación y Corrección Linter | 2026-06-30 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Ejecución exitosa de `npm run build` en 607ms solucionando advertencias de imports no utilizados. |
+
+---
+
+### Fase 5D: Registro de Compromisos del Proyecto (Completado)
+* **Fecha de Inicio**: 2026-06-30
+* **Fecha de Fin**: 2026-06-30
+
+| Actividad / Tarea | Fecha | Responsable | Horas Estimadas | Horas Reales | Estado | Detalle / Entregables |
+| :--- | :--- | :--- | :---: | :---: | :---: | :--- |
+| Diagnóstico de Esquema y SQL RLS | 2026-06-30 | A. Delgado / AI | 1.0 | 0.8 | Finalizado | Inspección del esquema `meeting_commitments` en schema.sql, confirmación de assignee_id y project_id, y creación del script RLS `5d_project_commitments_rls.sql`. |
+| Formulario de Nuevo Compromiso (Modal) | 2026-06-30 | A. Delgado / AI | 2.0 | 1.5 | Finalizado | Maquetación del componente modal controlado `NewCommitmentModal.tsx` con dropdowns para responsables (Profiles), validación de fecha límite en el futuro y panel de auditoría. |
+| Integración de API y Callback en App | 2026-06-30 | A. Delgado / AI | 1.5 | 1.2 | Finalizado | Implementación del helper `createProjectCommitment` y vinculación del callback `onAddCommitment` para refresco reactivo del listado en el detalle. |
+| Compilación y Corrección Linter | 2026-06-30 | A. Delgado / AI | 0.5 | 0.4 | Finalizado | Ejecución exitosa de `npm run build` en 409ms solucionando advertencias de imports de lucide-react. |
 
