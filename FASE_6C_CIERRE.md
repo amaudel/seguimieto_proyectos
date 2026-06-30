@@ -59,7 +59,7 @@ Este documento certifica la finalización, pruebas de calidad (QA) y validación
 *   **`[NEW]`** [6c_project_items_rls.sql](file:///c:/Users/andres.delgado/Desktop/seguimiento-proyectos-cooperativa/supabase/migrations/6c_project_items_rls.sql): Script de políticas RLS.
 *   **`[NEW]`** [NewActivityModal.tsx](file:///c:/Users/andres.delgado/Desktop/seguimiento-proyectos-cooperativa/src/components/NewActivityModal.tsx): Modal controlado de formulario.
 *   **`[MODIFY]`** [types.ts](file:///c:/Users/andres.delgado/Desktop/seguimiento-proyectos-cooperativa/src/types.ts): Mapeo de `assignee_id` en la interfaz `ProjectActivity`.
-*   **`[MODIFY]`** [projectsService.ts](file:///c:/Users/andres.delgado/Desktop/seguimiento-proyectos-cooperativa/src/services/projectsService.ts): Helpers `createProjectActivity` y `updateProjectActivityStatus`.
+*   **`[MODIFY]`** [projectsService.ts](file:///c:/Users/andres.delgado/Desktop/seguimiento-proyectos-cooperativa/src/services/projectsService.ts): Helpers `createProjectActivity` and `updateProjectActivityStatus`.
 *   **`[MODIFY]`** [ProjectDetail.tsx](file:///c:/Users/andres.delgado/Desktop/seguimiento-proyectos-cooperativa/src/components/ProjectDetail.tsx): Botón "Registrar Actividad", selector dropdown e inyección del modal en la pestaña Actividades.
 *   **`[MODIFY]`** [App.tsx](file:///c:/Users/andres.delgado/Desktop/seguimiento-proyectos-cooperativa/src/App.tsx): Callbacks `onAddActivity` y `onUpdateActivity` para refresco reactivo.
 *   **`[MODIFY]`** [REGISTRO_TIEMPOS.md](file:///c:/Users/andres.delgado/Desktop/seguimiento-proyectos-cooperativa/REGISTRO_TIEMPOS.md): Tiempos reales (4.0 horas reales en Fase 6C, acumulando 56.6 horas totales).
